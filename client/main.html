@@ -3,6 +3,11 @@
 </head>
 
 <body>
+  <form class="addPlayer">
+    <input type="text" name="playerName" placeholder="New player name">
+    <input type="submit">
+  </form>
+  <button type="button" class="clear">Clear DB</button>
   <ul>
     {{#each players}}
       {{> player}}
