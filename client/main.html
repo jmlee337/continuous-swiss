@@ -8,13 +8,28 @@
     <input type="submit">
   </form>
   <button type="button" class="clear">Clear DB</button>
-  <ul>
-    {{#each players}}
-      {{> player}}
-    {{/each}}
-  </ul>
+
+  <h3>Unqueued</h3>
+  {{#each unqueued}}
+    {{> player}}
+  {{/each}}
+
+  <h3>Matchmaking</h3>
+  {{#each matchmaking}}
+    {{> player}}
+  {{/each}}
+
+  <h3>Waiting</h3>
+  {{#each waiting}}
+    {{> player}}
+  {{/each}}
+
+  <h3>Playing</h3>
+  {{#each playing}}
+    {{> player}}
+  {{/each}}
 </body>
 
 <template name="player">
-  <li>{{name}}</li>
+  <div>{{name}}</div>
 </template>
