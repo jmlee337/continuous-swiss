@@ -28,7 +28,11 @@
 
       <h3>Unqueued</h3>
       {{#each unqueued}}
-        {{> player}}
+        <form class="queuePlayer">
+          {{name}}
+          <input type="hidden" name="playerId" value="{{_id}}">
+          <button type="submit" value="Queue">Queue</button>
+        </form>
       {{/each}}
     </div>
     <div class="column">

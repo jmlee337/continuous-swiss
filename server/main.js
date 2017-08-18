@@ -28,7 +28,7 @@ Meteor.methods({
 
     if (playerToQueue.score >= SCORE_THRESHOLD) {
       // match then wait
-      let matchedPlayer = findMatchInMatchmaking(playerToQueue);
+      const matchedPlayer = findMatchInMatchmaking(playerToQueue);
       if (matchedPlayer) {
         Players.update(matchedPlayer._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
         Players.update(playerToQueue._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
@@ -41,18 +41,16 @@ Meteor.methods({
           queueTime: Date.now()
         });
       } else {
-        Players.update(playerToQueue._id, {$set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}});
+        Players.update(playerToQueue._id, {
+          $set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}
+        });
       }
     } else {
       // wait then match
       let pairingId = findMatchInWaiting(playerToQueue);
       if (pairingId) {
-        Pairings.update(
-          pairingId, {
-          $set: {
-            player2Id: playerToQueue._id,
-            player2Name: playerToQueue.name
-          }
+        Pairings.update(pairingId, {
+          $set: {player2Id: playerToQueue._id, player2Name: playerToQueue.name}
         });
       } else {
         Pairings.insert({
@@ -101,28 +99,32 @@ Meteor.methods({
 
 // Player
 function findMatchInMatchmaking(queuingPlayer) {
-  Players.find({
+  const matchedPlayers = Players.find({
     queue: Queue.MATCHMAKING, score: queuingPlayer.score}, {
     sort: [['queueTime', 'asc']]
-  }).forEach((matchedPlayer, i, cursor) => {
+  }).fetch();
+  for (let i = 0; i < matchedPlayers.length; i++) {
+    const matchedPlayer = matchedPlayers[i];
     if (!queuingPlayer.playersPlayed.includes(matchedPlayer._id)) {
       return matchedPlayer;
     }
-  });
+  }
   return null;
 }
 
 // Pairing._id
 function findMatchInWaiting(queuingPlayer) {
-  Pairings.find({
+  const matchedPairings = Pairings.find({
     queue: Queue.WAITING, player2Id: {$exists: false}
-  }).forEach((matchedPairing, i, cursor) => {
+  }).fetch();
+  for (let i = 0; i < matchedPairings.length; i++) {
     const matchedPlayer = Players.findOne(matchedPairing.player1Id);
-    if (queuingPlayer.score === matchedPlayer.score
-        && !queuingPlayer.playersPlayed.includes(matchedPlayer._id)) {
+    const scoresMatch = queuingPlayer.score === matchedPlayer.score;
+    const havePlayed = queuingPlayer.playersPlayed.includes(matchedPlayer._id);
+    if (scoresMatch && !havePlayed) {
       return matchedPairing._id;
     }
-  });
+  }
   return null;
 }
 
@@ -143,9 +145,9 @@ function tryPromoteWaitingPair() {
     return;
   }
 
-  Players.update(pairingToPlayer.player1Id, {queue: Queue.PLAYING, queueTime: Date.now()});
-  Players.update(pairingToPlayer.player2Id, {queue: Queue.PLAYING, queueTime: Date.now()});
-  Pairings.update(pairingToPlay._id, {queue: Queue.PLAYING, queueTime: Date.now()});
+  Players.update(pairingToPlay.player1Id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
+  Players.update(pairingToPlay.player2Id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
+  Pairings.update(pairingToPlay._id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
 
   // there could be more
   tryPromoteWaitingPair();

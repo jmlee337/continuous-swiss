@@ -30,7 +30,7 @@ Template.body.helpers({
 
 Template.body.events({
   'submit .addPlayer': function(event) {
-    let playerName = event.target.playerName;
+    const playerName = event.target.playerName;
     Meteor.call('addPlayer', playerName.value);
     playerName.value = "";
     return false;
@@ -39,4 +39,9 @@ Template.body.events({
   'click .clear': function(event) {
     Meteor.call('clearDb');
   },
+
+  'submit .queuePlayer': function(event) {
+    Meteor.call('queuePlayer', event.target.playerId.value);
+    return false;
+  }
 });
