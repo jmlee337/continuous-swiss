@@ -1,7 +1,8 @@
-import { Meteor } from 'meteor/meteor';
+import {Meteor} from 'meteor/meteor';
 
-import { Players } from '../lib/collections.js';
-import { Queue } from '../lib/queue.js';
+import {Pairings} from '../lib/collections.js';
+import {Players} from '../lib/collections.js';
+import {Queue} from '../lib/queue.js';
 
 const NUM_SETUPS = 1;
 const SCORE_THRESHOLD = 0;
@@ -10,40 +11,55 @@ Meteor.methods({
   addPlayer: function(playerName) {
     Players.insert({
       name: playerName,
+      score: 0,
       queue: Queue.NONE,
+      queueTime: Date.now()
     });
   },
 
-  queuePlayer: function(_id) {
-    let playerToQueue = Players.findOne(_id);
+  queuePlayer: function(playerId) {
+    let playerToQueue = Players.findOne(playerId);
     if (!playerToQueue) {
       throw new Meteor.Error("BAD_REQUEST", "player not found");
     }
 
     if (playerToQueue.score >= SCORE_THRESHOLD) {
       // match then wait
-      let matchedPlayerId = findMatchInMatchmaking(playerToQueue);
-      if (matchedPlayerId) {
-        Players.update(matchedPlayerId, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
-        Players.update(_id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
+      let matchedPlayer = findMatchInMatchmaking(playerToQueue);
+      if (matchedPlayer) {
+        Players.update(matchedPlayer._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
+        Players.update(playerToQueue._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
         Pairings.insert({
-          player1Id: matchedPlayerId,
-          player2Id: _id,
+          player1Id: matchedPlayer._id,
+          player1Name: matchedPlayer.name,
+          player2Id: playerToQueue._id,
+          player2Name: playerToQueue.name,
           queue: Queue.WAITING,
           queueTime: Date.now()
         });
       } else {
-        Players.update(_id, {$set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}});
+        Players.update(playerToQueue._id, {$set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}});
       }
     } else {
       // wait then match
       let pairingId = findMatchInWaiting(playerToQueue);
       if (pairingId) {
-        Pairings.update(pairingId, {$set: {player2Id: _id}});
+        Pairings.update(
+          pairingId, {
+          $set: {
+            player2Id: playerToQueue._id,
+            player2Name: playerToQueue.name
+          }
+        });
       } else {
-        Pairings.insert({player1Id: _id, queueTime: Date.now()});
+        Pairings.insert({
+          player1Id: playerToQueue._id,
+          player1Name: playerToQueue.name,
+          queue: Queue.WAITING,
+          queueTime: Date.now()
+        });
       }
-      Players.update(_id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
+      Players.update(playerToQueue._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
     }
 
     // it's possible we moved a pairing to the front of the waiting queue
@@ -52,6 +68,7 @@ Meteor.methods({
 
 	clearDb: function() {
 		Players.remove({});
+    Pairings.remove({});
 	},
 });
 
@@ -76,7 +93,7 @@ const tryPromoteWaitingPair = function() {
     player1Id: {$exists: true},
     player2Id: {$exists: true}
   }, {
-    sort: [['queueTime', 'desc']]
+    sort: [['queueTime', 'asc']]
   });
   if (!pairingToPlay) {
     return;

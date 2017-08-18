@@ -1,25 +1,26 @@
-import { Template } from 'meteor/templating';
+import {Template} from 'meteor/templating';
 
-import { Players } from '../lib/collections.js';
-import { Queue } from '../lib/queue.js';
+import {Pairings} from '../lib/collections.js';
+import {Players} from '../lib/collections.js';
+import {Queue} from '../lib/queue.js';
 
 import './main.html';
 
 Template.body.helpers({
 	'unqueued': function() {
-    return Players.find({queue: Queue.NONE});
+    return Players.find({queue: Queue.NONE}, {sort: [['queueTime', 'asc']]});
   },
 
   'matchmaking': function() {
-    return Players.find({queue: Queue.MATCHMAKING});
+    return Players.find({queue: Queue.MATCHMAKING}, {sort: [['queueTime', 'asc']]});
   },
 
   'waiting': function() {
-    return Players.find({queue: Queue.WAITING});
+    return Pairings.find({queue: Queue.WAITING}, {sort: [['queueTime', 'asc']]});
   },
 
   'playing': function() {
-    return Players.find({queue: Queue.PLAYING});
+    return Pairings.find({queue: Queue.PLAYING}, {sort: [['queueTime', 'asc']]});
   },
 });
 
