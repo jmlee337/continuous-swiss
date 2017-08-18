@@ -118,6 +118,7 @@ function findMatchInWaiting(queuingPlayer) {
     queue: Queue.WAITING, player2Id: {$exists: false}
   }).fetch();
   for (let i = 0; i < matchedPairings.length; i++) {
+    const matchedPairing = matchedPairings[i];
     const matchedPlayer = Players.findOne(matchedPairing.player1Id);
     const scoresMatch = queuingPlayer.score === matchedPlayer.score;
     const havePlayed = queuingPlayer.playersPlayed.includes(matchedPlayer._id);

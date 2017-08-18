@@ -8,6 +8,13 @@
   min-width: 173px;
 }
 
-input[type=submit] {
-  visibility: hidden;
+.standings {
+  border: 1px solid black;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.standings td {
+  border: 1px solid black;
+  padding: 4px;
 }

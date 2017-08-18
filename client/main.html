@@ -5,7 +5,6 @@
 <body>
   <form class="addPlayer">
     <input type="text" name="playerName" placeholder="New player name">
-    <input type="submit">
   </form>
   <button type="button" class="clear">Clear DB</button>
 
@@ -13,7 +12,12 @@
     <div class="column">
       <h3>Playing</h3>
       {{#each playing}}
-        {{> pairing}}
+        <form class="winPlayer">
+          <input type="hidden" name="pairingId" value="{{_id}}"> 
+          <label><input type="radio" name="winner" value="player1"> {{player1Name}}</label><br/>
+          <label><input type="radio" name="winner" value="player2"> {{player2Name}}</label><br/>
+          <button type="submit">Submit</button>
+        </form>
       {{/each}}
 
       <h3>Waiting</h3>
@@ -29,23 +33,34 @@
       <h3>Unqueued</h3>
       {{#each unqueued}}
         <form class="queuePlayer">
-          {{name}}
           <input type="hidden" name="playerId" value="{{_id}}">
-          <button type="submit" value="Queue">Queue</button>
+          {{name}} <button type="submit">Queue</button>
         </form>
       {{/each}}
     </div>
     <div class="column">
       <h3>Standings</h3>
-      {{#each standings}}
-        {{> player}}
-      {{/each}}
+      <table class="standings">
+        <thead>
+          <tr><td>Name</td><td>Score</td><td>W</td><td>L</td></tr>
+        </thead>
+        <tbody>
+          {{#each standings}}
+            <tr>
+              <td>{{name}}</td>
+              <td>{{score}}</td>
+              <td>{{wins}}</td>
+              <td>{{losses}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
     </div>
   </div>
 </body>
 
 <template name="player">
-  <div>{{score}} - {{name}}</div>
+  <div>{{name}}</div>
 </template>
 
 <template name="pairing">

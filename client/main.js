@@ -24,7 +24,14 @@ Template.body.helpers({
   },
 
   'standings': function() {
-    return Players.find({}, {sort: [['score', 'desc'], ['losses', 'asc']]});
+    return Players.find({$or: [{wins: {$gt: 0}}, {losses: {$gt: 0}}]})
+        .fetch()
+        .sort((a, b) => {
+          if (a.score !== b.score) {
+            return b.score - a.score;
+          }
+          return b.wins / (b.wins + b.losses) - a.wins / (a.wins + a.losses);
+        });
   }
 });
 
@@ -42,6 +49,15 @@ Template.body.events({
 
   'submit .queuePlayer': function(event) {
     Meteor.call('queuePlayer', event.target.playerId.value);
+    return false;
+  },
+
+  'submit .winPlayer': function(event) {
+    if (event.target.winner.value === 'player1') {
+      Meteor.call('submitWinner', event.target.pairingId.value, 1);
+    } else if (event.target.winner.value === 'player2') {
+      Meteor.call('submitWinner', event.target.pairingId.value, 2);
+    }
     return false;
   }
 });
