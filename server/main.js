@@ -12,13 +12,15 @@ Meteor.methods({
     Players.insert({
       name: playerName,
       score: 0,
+      wins: 0,
+      losses: 0,
       queue: Queue.NONE,
       queueTime: Date.now()
     });
   },
 
   queuePlayer: function(playerId) {
-    let playerToQueue = Players.findOne(playerId);
+    const playerToQueue = Players.findOne(playerId);
     if (!playerToQueue) {
       throw new Meteor.Error("BAD_REQUEST", "player not found");
     }
@@ -66,24 +68,48 @@ Meteor.methods({
     tryPromoteWaitingPair();
   },
 
+  // playerNumber: 1 or 2 (player 1/player 2)
+  submitWinner: function(pairingId, playerNumber) {
+    if (!(playerNumber === 1 || playerNumber === 2)) {
+      throw new Meteor.Error("BAD_REQUEST", "player number not 1 or 2");
+    }
+    const pairing = Pairings.findOne(pairingId);
+    if (!pairing) {
+      throw new Meteor.Error("BAD_REQUEST", "pairing not found");
+    }
+
+    if (playerNumber === 1) {
+      giveWin(pairing.player1Id);
+      giveLoss(pairing.player2Id);
+    } else {
+      giveLoss(pairing.player1Id);
+      giveWin(pairing.player2Id);
+    }
+    Pairings.remove(pairingId);
+
+    tryPromoteWaitingPair();
+  },
+
 	clearDb: function() {
 		Players.remove({});
     Pairings.remove({});
 	},
 });
 
-const findMatchInMatchmaking = function(queuingPlayer) {
+// Player
+function findMatchInMatchmaking(queuingPlayer) {
   // TODO
   return null;
-};
+}
 
-const findMatchInWaiting = function(queuingPlayer) {
+// Pairing._id
+function findMatchInWaiting(queuingPlayer) {
   // TODO
   return null;
+}
 
-};
-
-const tryPromoteWaitingPair = function() {
+// void
+function tryPromoteWaitingPair() {
   if (Pairings.find({queue: Queue.PLAYING}).count() >= NUM_SETUPS) {
     return;
   }
@@ -105,4 +131,18 @@ const tryPromoteWaitingPair = function() {
 
   // there could be more
   tryPromoteWaitingPair();
-};
+}
+
+function giveWin(playerId) {
+  Players.update(playerId, {
+    $inc: {score: 1, wins: 1},
+    $set: {queue: Queue.NONE, queueTime: Date.now()}
+  });
+}
+
+function giveLoss(playerId) {
+  Players.update(playerId, {
+    $inc: {score: -1, losses: 1},
+    $set: {queue: Queue.NONE, queueTime: Date.now()}
+  });
+}

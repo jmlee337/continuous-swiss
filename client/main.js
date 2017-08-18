@@ -22,6 +22,10 @@ Template.body.helpers({
   'playing': function() {
     return Pairings.find({queue: Queue.PLAYING}, {sort: [['queueTime', 'asc']]});
   },
+
+  'standings': function() {
+    return Players.find({}, {sort: [['score', 'desc'], ['losses', 'asc']]});
+  }
 });
 
 Template.body.events({

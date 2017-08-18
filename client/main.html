@@ -9,29 +9,39 @@
   </form>
   <button type="button" class="clear">Clear DB</button>
 
-  <h3>Playing</h3>
-  {{#each playing}}
-    {{> pairing}}
-  {{/each}}
+  <div class="container">
+    <div class="column">
+      <h3>Playing</h3>
+      {{#each playing}}
+        {{> pairing}}
+      {{/each}}
 
-  <h3>Waiting</h3>
-  {{#each waiting}}
-    {{> pairing}}
-  {{/each}}
+      <h3>Waiting</h3>
+      {{#each waiting}}
+        {{> pairing}}
+      {{/each}}
 
-  <h3>Matchmaking</h3>
-  {{#each matchmaking}}
-    {{> player}}
-  {{/each}}
+      <h3>Matchmaking</h3>
+      {{#each matchmaking}}
+        {{> player}}
+      {{/each}}
 
-  <h3>Unqueued</h3>
-  {{#each unqueued}}
-    {{> player}}
-  {{/each}}
+      <h3>Unqueued</h3>
+      {{#each unqueued}}
+        {{> player}}
+      {{/each}}
+    </div>
+    <div class="column">
+      <h3>Standings</h3>
+      {{#each standings}}
+        {{> player}}
+      {{/each}}
+    </div>
+  </div>
 </body>
 
 <template name="player">
-  <div>{{name}}</div>
+  <div>{{score}} - {{name}}</div>
 </template>
 
 <template name="pairing">
