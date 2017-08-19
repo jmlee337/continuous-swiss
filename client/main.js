@@ -24,13 +24,12 @@ Template.body.helpers({
   },
 
   'standings': function() {
-    return Players.find({$or: [{wins: {$gt: 0}}, {losses: {$gt: 0}}]})
-        .fetch()
+    return Players.find({games: {$gt: 0}}).fetch()
         .sort((a, b) => {
           if (a.score !== b.score) {
             return b.score - a.score;
           }
-          return b.wins / (b.wins + b.losses) - a.wins / (a.wins + a.losses);
+          return b.wins / b.games - a.wins / a.games;
         });
   }
 });
@@ -41,6 +40,10 @@ Template.body.events({
     Meteor.call('addPlayer', playerName.value);
     playerName.value = "";
     return false;
+  },
+
+  'click .removePlayer': function(event) {
+    Meteor.call('removePlayer', event.target.value);
   },
 
   'click .clear': function(event) {

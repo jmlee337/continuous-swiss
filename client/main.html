@@ -66,6 +66,9 @@
         <form class="queuePlayer">
           <input type="hidden" name="playerId" value="{{_id}}">
           {{name}} <button type="submit">Queue</button>
+          {{#unless games}}
+            <button class="removePlayer" type="button" value="{{_id}}">Remove</button>
+          {{/unless}}
         </form>
       {{/each}}
     </div>

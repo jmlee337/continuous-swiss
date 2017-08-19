@@ -14,10 +14,15 @@ Meteor.methods({
       score: 0,
       wins: 0,
       losses: 0,
+      games: 0,
       playersPlayed: [],
       queue: Queue.NONE,
       queueTime: Date.now()
     });
+  },
+
+  removePlayer: function(playerId) {
+    Players.remove(playerId);
   },
 
   queuePlayer: function(playerId) {
@@ -202,7 +207,7 @@ function tryPromoteWaitingPair() {
 
 function giveWin(playerId, opponentId) {
   Players.update(playerId, {
-    $inc: {score: 1, wins: 1},
+    $inc: {score: 1, wins: 1, games: 1},
     $set: {queue: Queue.NONE, queueTime: Date.now()},
     $addToSet: {playersPlayed: opponentId}
   });
@@ -210,7 +215,7 @@ function giveWin(playerId, opponentId) {
 
 function giveLoss(playerId, opponentId) {
   Players.update(playerId, {
-    $inc: {score: -1, losses: 1},
+    $inc: {score: -1, losses: 1, games: 1},
     $set: {queue: Queue.NONE, queueTime: Date.now()},
     $addToSet: {playersPlayed: opponentId}
   });
