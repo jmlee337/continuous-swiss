@@ -6,7 +6,16 @@
   <form class="addPlayer">
     <input type="text" name="playerName" placeholder="New player name">
   </form>
-  <button type="button" class="clear">Clear DB</button>
+  <div>
+    <button class="addSetup" type="button">Add Setup</button>
+    {{#if setups.count}}
+      Remove:
+      {{#each setups}}
+        <button class="removeSetup" type="button" value="{{_id}}">{{number}}</button>
+      {{/each}}
+    {{/if}}
+  </div>
+  <button class="clear" type="button">Clear DB</button>
 
   <div class="container">
     <div class="column">

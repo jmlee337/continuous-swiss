@@ -3,6 +3,7 @@ import {Template} from 'meteor/templating';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
+import {Setups} from '../lib/collections.js';
 
 import './main.html';
 
@@ -31,7 +32,11 @@ Template.body.helpers({
           }
           return b.wins / b.games - a.wins / a.games;
         });
-  }
+  },
+
+  'setups': function() {
+    return Setups.find({}, {sort: [['number', 'asc']]});
+  },
 });
 
 Template.body.events({
@@ -44,6 +49,14 @@ Template.body.events({
 
   'click .removePlayer': function(event) {
     Meteor.call('removePlayer', event.target.value);
+  },
+
+  'click .addSetup': function(event) {
+    Meteor.call('addSetup');
+  },
+
+  'click .removeSetup': function(event) {
+    Meteor.call('removeSetup', event.target.value);
   },
 
   'click .clear': function(event) {

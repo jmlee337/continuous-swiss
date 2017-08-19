@@ -3,11 +3,34 @@ import {Meteor} from 'meteor/meteor';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
+import {Setups} from '../lib/collections.js';
 
-const NUM_SETUPS = 1;
 const SCORE_THRESHOLD = 0;
 
 Meteor.methods({
+  addSetup: function() {
+    const setups = Setups.find({}, {sort: [['number', 'asc']]}).fetch();
+    if (setups.length === 0) {
+      Setups.insert({number: 1});
+    } else if (setups[setups.length - 1].number === setups.length) {
+      // if there's no gap in numbering, add the new setup at the end.
+      Setups.insert({number: setups.length + 1});
+    } else {
+      // there's a gap somewhere, find it and fill it.
+      for (let i = 0; i < setups.length; i++) {
+        if (setups[i].number !== i + 1) {
+          Setups.insert({number: i + 1});
+          return;
+        }
+      }
+    }
+    tryPromoteWaitingPair();
+  },
+
+  removeSetup: function(setupId) {
+    Setups.remove(setupId);
+  },
+
   addPlayer: function(playerName) {
     Players.insert({
       name: playerName,
@@ -138,6 +161,7 @@ Meteor.methods({
       giveWin(player2Id, player1Id);
     }
     Pairings.remove(pairingId);
+    Setups.update(pairing.setupId, {$unset: {pairingId: ""}});
 
     tryPromoteWaitingPair();
   },
@@ -165,16 +189,14 @@ function findMatchInMatchmaking(queuingPlayer) {
 
 // Pairing._id
 function findMatchInWaiting(queuingPlayer) {
-  const matchedPairings = Pairings.find({
-    queue: Queue.WAITING, player2Id: {$exists: false}
-  }).fetch();
-  for (let i = 0; i < matchedPairings.length; i++) {
-    const matchedPairing = matchedPairings[i];
-    const matchedPlayer = Players.findOne(matchedPairing.player1Id);
+  const pairings = Pairings.find({queue: Queue.WAITING, player2Id: {$exists: false}}).fetch();
+  for (let i = 0; i < pairings.length; i++) {
+    const pairing = pairings[i];
+    const matchedPlayer = Players.findOne(pairing.player1Id);
     const scoresMatch = queuingPlayer.score === matchedPlayer.score;
     const havePlayed = queuingPlayer.playersPlayed.includes(matchedPlayer._id);
     if (scoresMatch && !havePlayed) {
-      return matchedPairing._id;
+      return pairing._id;
     }
   }
   return null;
@@ -182,27 +204,29 @@ function findMatchInWaiting(queuingPlayer) {
 
 // void
 function tryPromoteWaitingPair() {
-  if (Pairings.find({queue: Queue.PLAYING}).count() >= NUM_SETUPS) {
-    return;
-  }
-
-  let pairingToPlay = Pairings.findOne({
+  const setups = Setups.find({pairingId: {$exists: false}}, {sort: [['number', 'asc']]}).fetch();
+  const pairings = Pairings.find({
     queue: Queue.WAITING,
     player1Id: {$exists: true},
     player2Id: {$exists: true}
   }, {
     sort: [['queueTime', 'asc']]
-  });
-  if (!pairingToPlay) {
-    return;
+  }).fetch();
+  const length = Math.min(setups.length, pairings.length);
+
+  for (let i = 0; i < length; i++) {
+    const setup = setups[i];
+    const pairing = pairings[i];
+
+    Players.update(pairing.player1Id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
+    Players.update(pairing.player2Id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
+    Pairings.update(pairing._id, {$set: {
+      queue: Queue.PLAYING, queueTime: Date.now(), setupId: setup._id, setupNumber: setup.number
+    }});
+    Setups.update(setup._id, {$set: {pairingId: pairing._id}});
   }
 
-  Players.update(pairingToPlay.player1Id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
-  Players.update(pairingToPlay.player2Id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
-  Pairings.update(pairingToPlay._id, {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
 
-  // there could be more
-  tryPromoteWaitingPair();
 }
 
 function giveWin(playerId, opponentId) {
