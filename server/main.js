@@ -1,5 +1,6 @@
 import {Meteor} from 'meteor/meteor';
 
+import {Matches} from '../lib/collections.js';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
@@ -151,14 +152,26 @@ Meteor.methods({
       throw new Meteor.Error("BAD_REQUEST", "pairing not found");
     }
 
-    const player1Id = pairing.player1Id;
-    const player2Id = pairing.player2Id;
     if (winnerNumber === 1) {
-      giveWin(player1Id, player2Id);
-      giveLoss(player2Id, player1Id);
+      giveWin(pairing.player1Id,  pairing.player2Id);
+      giveLoss( pairing.player2Id, pairing.player1Id);
+      Matches.insert({
+        winnerId: pairing.player1Id,
+        winnerName: pairing.player1Name,
+        loserId:  pairing.player2Id,
+        loserName: pairing.player2Name,
+        time: Date.now()
+      });
     } else {
-      giveLoss(player1Id, player2Id);
-      giveWin(player2Id, player1Id);
+      giveLoss(pairing.player1Id,  pairing.player2Id);
+      giveWin( pairing.player2Id, pairing.player1Id);
+      Matches.insert({
+        winnerId:  pairing.player2Id,
+        winnerName: pairing.player2Name,
+        loserId: pairing.player1Id,
+        loserName: pairing.player1Name,
+        time: Date.now()
+      });
     }
     Pairings.remove(pairingId);
     Setups.update(pairing.setupId, {$unset: {pairingId: ""}});
@@ -170,6 +183,7 @@ Meteor.methods({
 		Players.remove({});
     Pairings.remove({});
     Setups.remove({});
+    Matches.remove({});
 	},
 });
 

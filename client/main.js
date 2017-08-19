@@ -1,5 +1,6 @@
 import {Template} from 'meteor/templating';
 
+import {Matches} from '../lib/collections.js';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
@@ -36,6 +37,10 @@ Template.body.helpers({
 
   'setups': function() {
     return Setups.find({}, {sort: [['number', 'asc']]});
+  },
+
+  'matches': function() {
+    return Matches.find({}, {sort: [['time', 'desc']]});
   },
 });
 

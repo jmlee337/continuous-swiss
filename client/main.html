@@ -117,10 +117,8 @@
     </div>
     <div class="column">
       <h3>Standings</h3>
-      <table class="standings">
-        <thead>
-          <tr><td>Name</td><td>Score</td><td>W</td><td>L</td></tr>
-        </thead>
+      <table class="withHeader">
+        <thead><tr><td>Name</td><td>Score</td><td>W</td><td>L</td></tr></thead>
         <tbody>
           {{#each standings}}
             <tr>
@@ -129,6 +127,17 @@
               <td>{{wins}}</td>
               <td>{{losses}}</td>
             </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+    <div class="column">
+      <h3>Matches</h3>
+      <table class="withHeader withButtons">
+        <thead><tr><td>Winner</td><td>Loser</td><td>Fix?</td></tr></thead>
+        <tbody>
+          {{#each matches}}
+            <tr><td>{{winnerName}}</td><td>{{loserName}}</td><td>&#x21c4;</td></tr>
           {{/each}}
         </tbody>
       </table>

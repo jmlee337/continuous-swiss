@@ -20,12 +20,12 @@ button:disabled {
   visibility: hidden;
 }
 
-.standings {
+.withHeader {
   border: 1px solid black;
   border-collapse: collapse;
 }
 
-.standings td {
+.withHeader td {
   border: 1px solid black;
   padding: 4px;
 }
