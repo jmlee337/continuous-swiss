@@ -21,11 +21,14 @@ button:disabled {
 }
 
 .withHeader {
-  border: 1px solid black;
   border-collapse: collapse;
 }
 
-.withHeader td {
-  border: 1px solid black;
-  padding: 4px;
+.withHeader thead {
+  font-weight: bold;
+}
+
+.withHeader tr {
+  height: 2em;
+  border-bottom: 1px solid #A7A7A7;
 }
