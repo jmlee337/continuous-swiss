@@ -20,46 +20,66 @@
   <div class="container">
     <div class="column">
       <h3>Playing</h3>
-      {{#each playing}}
-        <form class="winPlayer">
-          <input type="hidden" name="pairingId" value="{{_id}}"> 
-          <label><input type="radio" name="winner" value="player1"> {{player1Name}}</label><br/>
-          <label><input type="radio" name="winner" value="player2"> {{player2Name}}</label><br/>
-          <button type="submit">Submit</button>
-        </form>
-      {{/each}}
+      <table class="withButtons">
+        {{#each playing}}
+          <tr>
+            <td rowspan="2">{{setupNumber}}</td>
+            <td>
+              <label>
+                <input type="radio" form="playing{{_id}}" name="winner" value="player1">
+                {{player1Name}}
+              </label>
+            </td>
+            <td rowspan="2">
+              <form class="winPlayer" id="playing{{_id}}">
+                <input type="hidden" name="pairingId" value="{{_id}}">
+                <button type="submit">Submit</button>
+              </form>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>
+                <input type="radio" form="playing{{_id}}" name="winner" value="player2">
+                {{player2Name}}
+              </label>
+            </td>
+          </tr>
+          <tr></tr>
+        {{/each}}
+      </table>
 
       <h3>Waiting</h3>
-      <table class="waiting">
-      {{#each waiting}}
-        <tr>
-        {{#if player1Id}}
-          <td>
-            <form class="dequeueWaiting" id="waiting{{player1Id}}">
-              <input type="hidden" name="pairingId" value="{{_id}}">
-              <input type="hidden" name="quitter" value="player1">
-              {{player1Name}}
-            </form>
-          </td><td><button type="submit" form="waiting{{player1Id}}">Dequeue</button></td>
-        {{else}}
-          <td>?</td>
-        {{/if}}
-        </tr>
-        <tr>
-        {{#if player2Id}}
-          <td>
-            <form class="dequeueWaiting" id="waiting{{player2Id}}">
-              <input type="hidden" name="pairingId" value="{{_id}}">
-              <input type="hidden" name="quitter" value="player2">
-              {{player2Name}}
-            </form>
-          </td><td><button type="submit" form="waiting{{player2Id}}">Dequeue</button></td>
-        {{else}}
-          <td>?</td>
-        {{/if}}
-        </tr>
-        <tr></tr>
-      {{/each}}
+      <table class="withButtons">
+        {{#each waiting}}
+          <tr>
+            {{#if player1Id}}
+              <td>
+                <form class="dequeueWaiting" id="waiting{{player1Id}}">
+                  <input type="hidden" name="pairingId" value="{{_id}}">
+                  <input type="hidden" name="quitter" value="player1">
+                  {{player1Name}}
+                </form>
+              </td><td><button type="submit" form="waiting{{player1Id}}">Dequeue</button></td>
+            {{else}}
+              <td>?</td>
+            {{/if}}
+          </tr>
+          <tr>
+            {{#if player2Id}}
+              <td>
+                <form class="dequeueWaiting" id="waiting{{player2Id}}">
+                  <input type="hidden" name="pairingId" value="{{_id}}">
+                  <input type="hidden" name="quitter" value="player2">
+                  {{player2Name}}
+                </form>
+              </td><td><button type="submit" form="waiting{{player2Id}}">Dequeue</button></td>
+            {{else}}
+              <td>?</td>
+            {{/if}}
+          </tr>
+          <tr></tr>
+        {{/each}}
       </table>
 
       <h3>Matchmaking</h3>
