@@ -137,7 +137,17 @@
         <thead><tr><td>Winner</td><td>Loser</td><td>Fix?</td></tr></thead>
         <tbody>
           {{#each matches}}
-            <tr><td>{{winnerName}}</td><td>{{loserName}}</td><td>&#x21c4;</td></tr>
+            <tr>
+              <td>{{winnerName}}</td>
+              <td>{{loserName}}</td>
+              <td>
+                {{#if unfixable}}
+                  <button type="button" disabled>&#x21c4;</button>
+                {{else}}
+                  <button class="fixMatch" type="button" value="{{_id}}">&#x21c4;</button>
+                {{/if}}
+              </td>
+            </tr>
           {{/each}}
         </tbody>
       </table>

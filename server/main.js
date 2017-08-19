@@ -93,6 +93,7 @@ Meteor.methods({
       }
       Players.update(playerToQueue._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
     }
+    Matches.update(playerToQueue.lastMatchId, {$set: {unfixable: true}});
 
     // it's possible we moved a pairing to the front of the waiting queue
     tryPromoteWaitingPairing();
@@ -153,30 +154,55 @@ Meteor.methods({
     }
 
     if (winnerNumber === 1) {
-      giveWin(pairing.player1Id,  pairing.player2Id);
-      giveLoss( pairing.player2Id, pairing.player1Id);
-      Matches.insert({
+      const matchId = Matches.insert({
         winnerId: pairing.player1Id,
         winnerName: pairing.player1Name,
         loserId:  pairing.player2Id,
         loserName: pairing.player2Name,
         time: Date.now()
       });
+      giveWin(pairing.player1Id,  pairing.player2Id, matchId);
+      giveLoss(pairing.player2Id, pairing.player1Id, matchId);
     } else {
-      giveLoss(pairing.player1Id,  pairing.player2Id);
-      giveWin( pairing.player2Id, pairing.player1Id);
-      Matches.insert({
+      const matchId = Matches.insert({
         winnerId:  pairing.player2Id,
         winnerName: pairing.player2Name,
         loserId: pairing.player1Id,
         loserName: pairing.player1Name,
         time: Date.now()
       });
+      giveLoss(pairing.player1Id,  pairing.player2Id, matchId);
+      giveWin(pairing.player2Id, pairing.player1Id, matchId);
     }
     Pairings.remove(pairingId);
     Setups.update(pairing.setupId, {$unset: {pairingId: ""}});
 
     tryPromoteWaitingPairing();
+  },
+
+  fixMatch: function(matchId) {
+    const match = Matches.findOne(matchId);
+    if (!match) {
+      throw new Meteor.Error("BAD_REQUEST", "match not found");
+    }
+    if (match.unfixable) {
+      throw new Meteor.Error("PRECONDITION_FAILED", "match is unfixable");
+    }
+    if (Players.findOne(match.winnerId).queue !== Queue.NONE) {
+      throw new Meteor.Error("PRECONDITION_FAILED", "winner not unqueued");
+    }
+    if (Players.findOne(match.loserId).queue !== Queue.NONE) {
+      throw new Meteor.Error("PRECONDITION_FAILED", "loser not unqueued");
+    }
+
+    Players.update(match.winnerId, {$inc: {wins: -1, losses: 1, score: -2}});
+    Players.update(match.loserId, {$inc: {wins: 1, losses: -1, score: 2}});
+    Matches.update(matchId, {$set: {
+      winnerId: match.loserId,
+      winnerName: match.loserName,
+      loserId: match.winnerId,
+      loserName: match.winnerName
+    }});
   },
 
 	clearDb: function() {
@@ -244,18 +270,18 @@ function tryPromoteWaitingPairing() {
   }
 }
 
-function giveWin(playerId, opponentId) {
+function giveWin(playerId, opponentId, matchId) {
   Players.update(playerId, {
     $inc: {score: 1, wins: 1, games: 1},
-    $set: {queue: Queue.NONE, queueTime: Date.now()},
+    $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
     $addToSet: {playersPlayed: opponentId}
   });
 }
 
-function giveLoss(playerId, opponentId) {
+function giveLoss(playerId, opponentId, matchId) {
   Players.update(playerId, {
     $inc: {score: -1, losses: 1, games: 1},
-    $set: {queue: Queue.NONE, queueTime: Date.now()},
+    $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
     $addToSet: {playersPlayed: opponentId}
   });
 }

@@ -92,5 +92,9 @@ Template.body.events({
       Meteor.call('submitWinner', event.target.pairingId.value, 2);
     }
     return false;
-  }
+  },
+
+  'click .fixMatch': function(event) {
+    Meteor.call('fixMatch', event.target.value);
+  },
 });
