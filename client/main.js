@@ -72,15 +72,15 @@ Template.body.events({
     Meteor.call('queuePlayer', event.target.value);
   },
 
-  'click .dequeueMatchmaking': function(event) {
-    Meteor.call('dequeueFromMatchmaking', event.target.value);
+  'click .unqueueMatchmaking': function(event) {
+    Meteor.call('unqueueFromMatchmaking', event.target.value);
   },
 
-  'submit .dequeueWaiting': function(event) {
+  'submit .unqueueWaiting': function(event) {
     if (event.target.quitter.value === 'player1') {
-      Meteor.call('dequeueFromWaiting', event.target.pairingId.value, 1);
+      Meteor.call('unqueueFromWaiting', event.target.pairingId.value, 1);
     } else if (event.target.quitter.value === 'player2') {
-      Meteor.call('dequeueFromWaiting', event.target.pairingId.value, 2);
+      Meteor.call('unqueueFromWaiting', event.target.pairingId.value, 2);
     }
     return false;
   },

@@ -98,12 +98,12 @@ Meteor.methods({
     tryPromoteWaitingPairing();
   },
 
-  dequeueFromMatchmaking: function(playerId) {
+  unqueueFromMatchmaking: function(playerId) {
     Players.update(playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
   },
 
   // quitterNumber: 1 or 2 (player 1/player 2)
-  dequeueFromWaiting: function(pairingId, quitterNumber) {
+  unqueueFromWaiting: function(pairingId, quitterNumber) {
     if (!(quitterNumber === 1 || quitterNumber === 2)) {
       throw new Meteor.Error("BAD_REQUEST", "quitter number not 1 or 2");
     }

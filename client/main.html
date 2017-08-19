@@ -55,14 +55,14 @@
           <tr>
             {{#if player1Id}}
               <td>
-                <form class="dequeueWaiting" id="waiting{{player1Id}}">
+                <form class="unqueueWaiting" id="waiting{{player1Id}}">
                   <input type="hidden" name="pairingId" value="{{_id}}">
                   <input type="hidden" name="quitter" value="player1">
                   {{player1Name}}
                 </form>
               </td>
               <td rowspan="2">{{score}}</td>
-              <td><button type="submit" form="waiting{{player1Id}}">Dequeue</button></td>
+              <td><button type="submit" form="waiting{{player1Id}}">Unqueue</button></td>
             {{else}}
               <td>?</td>
             {{/if}}
@@ -70,13 +70,13 @@
           <tr>
             {{#if player2Id}}
               <td>
-                <form class="dequeueWaiting" id="waiting{{player2Id}}">
+                <form class="unqueueWaiting" id="waiting{{player2Id}}">
                   <input type="hidden" name="pairingId" value="{{_id}}">
                   <input type="hidden" name="quitter" value="player2">
                   {{player2Name}}
                 </form>
               </td>
-              <td><button type="submit" form="waiting{{player2Id}}">Dequeue</button></td>
+              <td><button type="submit" form="waiting{{player2Id}}">Unqueue</button></td>
             {{else}}
               <td>?</td>
             {{/if}}
@@ -92,7 +92,7 @@
             <td>{{name}}</td>
             <td>{{score}}</td>
             <td>
-              <button class="dequeueMatchmaking" type="button" value="{{_id}}">Dequeue</button>
+              <button class="unqueueMatchmaking" type="button" value="{{_id}}">Unqueue</button>
             </td>
           </tr>
         {{/each}}
