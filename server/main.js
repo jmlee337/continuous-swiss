@@ -61,6 +61,7 @@ Meteor.methods({
         Players.update(matchedPlayer._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
         Players.update(playerToQueue._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
         Pairings.insert({
+          score: matchedPlayer.score,
           player1Id: matchedPlayer._id,
           player1Name: matchedPlayer.name,
           player2Id: playerToQueue._id,
@@ -82,6 +83,7 @@ Meteor.methods({
         });
       } else {
         Pairings.insert({
+          score: playerToQueue.score,
           player1Id: playerToQueue._id,
           player1Name: playerToQueue.name,
           queue: Queue.WAITING,
@@ -112,8 +114,7 @@ Meteor.methods({
     if (quitterNumber === 1) {
       Players.update(pairing.player1Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
       if (pairing.player2Id) {
-        const player2 = Players.findOne(pairing.player2Id);
-        if (player2.score >= SCORE_THRESHOLD) {
+        if (pairing.score >= SCORE_THRESHOLD) {
           Players.update(pairing.player2Id, {
             $set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}
           });
@@ -129,8 +130,7 @@ Meteor.methods({
       }
     } else {
       Players.update(pairing.player2Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-      const player1 = Players.findOne(pairing.player1Id);
-      if (player1.score >= SCORE_THRESHOLD) {
+      if (pairing.score >= SCORE_THRESHOLD) {
         Players.update(pairing.player1Id, {
           $set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}
         });
@@ -176,7 +176,8 @@ Meteor.methods({
 // Player
 function findMatchInMatchmaking(queuingPlayer) {
   const matchedPlayers = Players.find({
-    queue: Queue.MATCHMAKING, score: queuingPlayer.score}, {
+    queue: Queue.MATCHMAKING, score: queuingPlayer.score
+  }, {
     sort: [['queueTime', 'asc']]
   }).fetch();
   for (let i = 0; i < matchedPlayers.length; i++) {
@@ -190,13 +191,14 @@ function findMatchInMatchmaking(queuingPlayer) {
 
 // Pairing._id
 function findMatchInWaiting(queuingPlayer) {
-  const pairings = Pairings.find({queue: Queue.WAITING, player2Id: {$exists: false}}).fetch();
+  const pairings = Pairings.find({
+    queue: Queue.WAITING, score: queuingPlayer.score, player2Id: {$exists: false}
+  }, {
+    sort: [['queueTime', 'asc']]
+  }).fetch();
   for (let i = 0; i < pairings.length; i++) {
     const pairing = pairings[i];
-    const matchedPlayer = Players.findOne(pairing.player1Id);
-    const scoresMatch = queuingPlayer.score === matchedPlayer.score;
-    const havePlayed = queuingPlayer.playersPlayed.includes(matchedPlayer._id);
-    if (scoresMatch && !havePlayed) {
+    if (!queuingPlayer.playersPlayed.includes(pairing.player1Id)) {
       return pairing._id;
     }
   }

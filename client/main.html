@@ -60,7 +60,9 @@
                   <input type="hidden" name="quitter" value="player1">
                   {{player1Name}}
                 </form>
-              </td><td><button type="submit" form="waiting{{player1Id}}">Dequeue</button></td>
+              </td>
+              <td rowspan="2">{{score}}</td>
+              <td><button type="submit" form="waiting{{player1Id}}">Dequeue</button></td>
             {{else}}
               <td>?</td>
             {{/if}}
@@ -73,7 +75,8 @@
                   <input type="hidden" name="quitter" value="player2">
                   {{player2Name}}
                 </form>
-              </td><td><button type="submit" form="waiting{{player2Id}}">Dequeue</button></td>
+              </td>
+              <td><button type="submit" form="waiting{{player2Id}}">Dequeue</button></td>
             {{else}}
               <td>?</td>
             {{/if}}
