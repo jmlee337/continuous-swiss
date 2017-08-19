@@ -83,22 +83,34 @@
       </table>
 
       <h3>Matchmaking</h3>
-      {{#each matchmaking}}
-        <div>
-          {{name}} <button class="dequeueMatchmaking" type="button" value="{{_id}}">Dequeue</button>
-        </div>
-      {{/each}}
+      <table class="withButtons">
+        {{#each matchmaking}}
+          <tr>
+            <td>{{name}}</td>
+            <td>{{score}}</td>
+            <td>
+              <button class="dequeueMatchmaking" type="button" value="{{_id}}">Dequeue</button>
+            </td>
+          </tr>
+        {{/each}}
+      </table>
 
       <h3>Unqueued</h3>
-      {{#each unqueued}}
-        <div>
-          {{name}}
-          <button class="queuePlayer" type="button" value="{{_id}}">Queue</button>
-          {{#unless games}}
-            <button class="removePlayer" type="button" value="{{_id}}">Remove</button>
-          {{/unless}}
-        </div>
-      {{/each}}
+      <table class="withButtons">
+        {{#each unqueued}}
+          <tr>
+            <td>{{name}}</td>
+            <td>
+              {{#if games}}
+                <button type="button" disabled>x</button>
+              {{else}}
+                <button class="removePlayer" type="button" value="{{_id}}">x</button>
+              {{/if}}
+            </td>
+            <td><button class="queuePlayer" type="button" value="{{_id}}">Queue</button></td>
+          </tr>
+        {{/each}}
+      </table>
     </div>
     <div class="column">
       <h3>Standings</h3>

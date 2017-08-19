@@ -24,7 +24,7 @@ Meteor.methods({
         }
       }
     }
-    tryPromoteWaitingPair();
+    tryPromoteWaitingPairing();
   },
 
   removeSetup: function(setupId) {
@@ -92,7 +92,7 @@ Meteor.methods({
     }
 
     // it's possible we moved a pairing to the front of the waiting queue
-    tryPromoteWaitingPair();
+    tryPromoteWaitingPairing();
   },
 
   dequeueFromMatchmaking: function(playerId) {
@@ -163,7 +163,7 @@ Meteor.methods({
     Pairings.remove(pairingId);
     Setups.update(pairing.setupId, {$unset: {pairingId: ""}});
 
-    tryPromoteWaitingPair();
+    tryPromoteWaitingPairing();
   },
 
 	clearDb: function() {
@@ -204,7 +204,7 @@ function findMatchInWaiting(queuingPlayer) {
 }
 
 // void
-function tryPromoteWaitingPair() {
+function tryPromoteWaitingPairing() {
   const setups = Setups.find({pairingId: {$exists: false}}, {sort: [['number', 'asc']]}).fetch();
   const pairings = Pairings.find({
     queue: Queue.WAITING,
