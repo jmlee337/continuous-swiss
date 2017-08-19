@@ -27,7 +27,10 @@
 
       <h3>Matchmaking</h3>
       {{#each matchmaking}}
-        {{> player}}
+        <form class="dequeueMatchmakingPlayer">
+          <input type="hidden" name="playerId" value="{{_id}}">
+          {{name}} <button type="submit">Dequeue</button>
+        </form>
       {{/each}}
 
       <h3>Unqueued</h3>

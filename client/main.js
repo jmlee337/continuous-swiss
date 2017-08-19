@@ -52,6 +52,11 @@ Template.body.events({
     return false;
   },
 
+  'submit .dequeueMatchmakingPlayer': function(event) {
+    Meteor.call('dequeueFromMatchmaking', event.target.playerId.value);
+    return false;
+  },
+
   'submit .winPlayer': function(event) {
     if (event.target.winner.value === 'player1') {
       Meteor.call('submitWinner', event.target.pairingId.value, 1);

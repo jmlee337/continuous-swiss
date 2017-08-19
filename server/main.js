@@ -67,6 +67,10 @@ Meteor.methods({
     tryPromoteWaitingPair();
   },
 
+  dequeueFromMatchmaking: function(playerId) {
+    Players.update(playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
+  },
+
   // playerNumber: 1 or 2 (player 1/player 2)
   submitWinner: function(pairingId, playerNumber) {
     if (!(playerNumber === 1 || playerNumber === 2)) {
