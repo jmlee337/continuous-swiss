@@ -47,7 +47,7 @@ Meteor.methods({
       }
     } else {
       // wait then match
-      let pairingId = findMatchInWaiting(playerToQueue);
+      const pairingId = findMatchInWaiting(playerToQueue);
       if (pairingId) {
         Pairings.update(pairingId, {
           $set: {player2Id: playerToQueue._id, player2Name: playerToQueue.name}
@@ -71,10 +71,52 @@ Meteor.methods({
     Players.update(playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
   },
 
-  // playerNumber: 1 or 2 (player 1/player 2)
-  submitWinner: function(pairingId, playerNumber) {
-    if (!(playerNumber === 1 || playerNumber === 2)) {
-      throw new Meteor.Error("BAD_REQUEST", "player number not 1 or 2");
+  // quitterNumber: 1 or 2 (player 1/player 2)
+  dequeueFromWaiting: function(pairingId, quitterNumber) {
+    if (!(quitterNumber === 1 || quitterNumber === 2)) {
+      throw new Meteor.Error("BAD_REQUEST", "quitter number not 1 or 2");
+    }
+    const pairing = Pairings.findOne(pairingId);
+    if (!pairing) {
+      throw new Meteor.Error("BAD_REQUEST", "pairing not found");
+    }
+
+    if (quitterNumber === 1) {
+      Players.update(pairing.player1Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
+      if (pairing.player2Id) {
+        const player2 = Players.findOne(pairing.player2Id);
+        if (player2.score >= SCORE_THRESHOLD) {
+          Players.update(pairing.player2Id, {
+            $set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}
+          });
+          Pairings.remove(pairingId);
+        } else {
+          Pairings.update(pairingId, {
+            $set: {player1Id: pairing.player2Id, player1Name: pairing.player2Name},
+            $unset: {player2Id: "", player2Name: ""}
+          });
+        }
+      } else {
+        Pairings.remove(pairingId);
+      }
+    } else {
+      Players.update(pairing.player2Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
+      const player1 = Players.findOne(pairing.player1Id);
+      if (player1.score >= SCORE_THRESHOLD) {
+        Players.update(pairing.player1Id, {
+          $set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}
+        });
+        Pairings.remove(pairingId);
+      } else {
+        Pairings.update(pairingId, {$unset: {player2Id: "", player2Name: ""}});
+      }
+    }
+  },
+
+  // winnerNumber: 1 or 2 (player 1/player 2)
+  submitWinner: function(pairingId, winnerNumber) {
+    if (!(winnerNumber === 1 || winnerNumber === 2)) {
+      throw new Meteor.Error("BAD_REQUEST", "winner number not 1 or 2");
     }
     const pairing = Pairings.findOne(pairingId);
     if (!pairing) {
@@ -83,7 +125,7 @@ Meteor.methods({
 
     const player1Id = pairing.player1Id;
     const player2Id = pairing.player2Id;
-    if (playerNumber === 1) {
+    if (winnerNumber === 1) {
       giveWin(player1Id, player2Id);
       giveLoss(player2Id, player1Id);
     } else {

@@ -57,6 +57,15 @@ Template.body.events({
     return false;
   },
 
+  'submit .dequeueWaitingPlayer': function(event) {
+    if (event.target.quitter.value === 'player1') {
+      Meteor.call('dequeueFromWaiting', event.target.pairingId.value, 1);
+    } else if (event.target.quitter.value === 'player2') {
+      Meteor.call('dequeueFromWaiting', event.target.pairingId.value, 2);
+    }
+    return false;
+  },
+
   'submit .winPlayer': function(event) {
     if (event.target.winner.value === 'player1') {
       Meteor.call('submitWinner', event.target.pairingId.value, 1);

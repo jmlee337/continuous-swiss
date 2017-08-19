@@ -21,9 +21,37 @@
       {{/each}}
 
       <h3>Waiting</h3>
+      <table class="waiting">
       {{#each waiting}}
-        {{> pairing}}
+        <tr>
+        {{#if player1Id}}
+          <td>
+            <form class="dequeueWaitingPlayer" id="waiting{{player1Id}}">
+              <input type="hidden" name="pairingId" value="{{_id}}">
+              <input type="hidden" name="quitter" value="player1">
+              {{player1Name}}
+            </form>
+          </td><td><button type="submit" form="waiting{{player1Id}}">Dequeue</button></td>
+        {{else}}
+          <td>?</td>
+        {{/if}}
+        </tr>
+        <tr>
+        {{#if player2Id}}
+          <td>
+            <form class="dequeueWaitingPlayer" id="waiting{{player2Id}}">
+              <input type="hidden" name="pairingId" value="{{_id}}">
+              <input type="hidden" name="quitter" value="player2">
+              {{player2Name}}
+            </form>
+          </td><td><button type="submit" form="waiting{{player2Id}}">Dequeue</button></td>
+        {{else}}
+          <td>?</td>
+        {{/if}}
+        </tr>
+        <tr></tr>
       {{/each}}
+      </table>
 
       <h3>Matchmaking</h3>
       {{#each matchmaking}}
