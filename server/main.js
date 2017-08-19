@@ -242,8 +242,6 @@ function tryPromoteWaitingPairing() {
     }});
     Setups.update(setup._id, {$set: {pairingId: pairing._id}});
   }
-
-
 }
 
 function giveWin(playerId, opponentId) {
