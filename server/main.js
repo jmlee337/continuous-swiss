@@ -169,6 +169,7 @@ Meteor.methods({
 	clearDb: function() {
 		Players.remove({});
     Pairings.remove({});
+    Setups.remove({});
 	},
 });
 
