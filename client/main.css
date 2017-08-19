@@ -8,7 +8,7 @@
   min-width: 173px;
 }
 
-.waiting {
+table {
   width: 100%;
 }
 
@@ -19,7 +19,6 @@
 .standings {
   border: 1px solid black;
   border-collapse: collapse;
-  width: 100%;
 }
 
 .standings td {

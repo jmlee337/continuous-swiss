@@ -50,17 +50,15 @@ Template.body.events({
     Meteor.call('clearDb');
   },
 
-  'submit .queuePlayer': function(event) {
-    Meteor.call('queuePlayer', event.target.playerId.value);
-    return false;
+  'click .queuePlayer': function(event) {
+    Meteor.call('queuePlayer', event.target.value);
   },
 
-  'submit .dequeueMatchmakingPlayer': function(event) {
-    Meteor.call('dequeueFromMatchmaking', event.target.playerId.value);
-    return false;
+  'click .dequeueMatchmaking': function(event) {
+    Meteor.call('dequeueFromMatchmaking', event.target.value);
   },
 
-  'submit .dequeueWaitingPlayer': function(event) {
+  'submit .dequeueWaiting': function(event) {
     if (event.target.quitter.value === 'player1') {
       Meteor.call('dequeueFromWaiting', event.target.pairingId.value, 1);
     } else if (event.target.quitter.value === 'player2') {

@@ -26,7 +26,7 @@
         <tr>
         {{#if player1Id}}
           <td>
-            <form class="dequeueWaitingPlayer" id="waiting{{player1Id}}">
+            <form class="dequeueWaiting" id="waiting{{player1Id}}">
               <input type="hidden" name="pairingId" value="{{_id}}">
               <input type="hidden" name="quitter" value="player1">
               {{player1Name}}
@@ -39,7 +39,7 @@
         <tr>
         {{#if player2Id}}
           <td>
-            <form class="dequeueWaitingPlayer" id="waiting{{player2Id}}">
+            <form class="dequeueWaiting" id="waiting{{player2Id}}">
               <input type="hidden" name="pairingId" value="{{_id}}">
               <input type="hidden" name="quitter" value="player2">
               {{player2Name}}
@@ -55,21 +55,20 @@
 
       <h3>Matchmaking</h3>
       {{#each matchmaking}}
-        <form class="dequeueMatchmakingPlayer">
-          <input type="hidden" name="playerId" value="{{_id}}">
-          {{name}} <button type="submit">Dequeue</button>
-        </form>
+        <div>
+          {{name}} <button class="dequeueMatchmaking" type="button" value="{{_id}}">Dequeue</button>
+        </div>
       {{/each}}
 
       <h3>Unqueued</h3>
       {{#each unqueued}}
-        <form class="queuePlayer">
-          <input type="hidden" name="playerId" value="{{_id}}">
-          {{name}} <button type="submit">Queue</button>
+        <div>
+          {{name}}
+          <button class="queuePlayer" type="button" value="{{_id}}">Queue</button>
           {{#unless games}}
             <button class="removePlayer" type="button" value="{{_id}}">Remove</button>
           {{/unless}}
-        </form>
+        </div>
       {{/each}}
     </div>
     <div class="column">
