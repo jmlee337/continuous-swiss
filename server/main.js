@@ -247,15 +247,6 @@ function queuePlayerCommon(playerId, setUnfixable) {
   }
 }
 
-function findMatch(queuingPlayer, matchmakingFirst) {
-  if (matchmakingFirst) {
-    const matchmakingMatch = findMatchInMatchmaking(queuingPlayer);
-    return matchmakingMatch ? matchmakingMatch : findMatchInWaiting(queuingPlayer);
-  }
-  const waitingMatch = findMatchInWaiting(queuingPlayer);
-  return waitingMatch ? waitingMatch : findMatchInMatchmaking(queuingPlayer);
-}
-
 // Player
 function findMatchInMatchmaking(queuingPlayer) {
   return Players.find({
