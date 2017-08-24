@@ -8,7 +8,6 @@ import {Queue} from '../lib/queue.js';
 import {Setups} from '../lib/collections.js';
 
 const URL_BASE = "https://api.smash.gg/";
-const SCORE_THRESHOLD = 0;
 
 Meteor.methods({
   addSetup: function() {
