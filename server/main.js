@@ -35,13 +35,20 @@ Meteor.methods({
   },
 
   addPlayer: function(playerName) {
+    let bonuses = 0;
+    const firstPlace = Players.find({bonuses: 0}, {sort: [['score', 'desc']]}).fetch()[0];
+    if (firstPlace) {
+      bonuses = Math.floor(firstPlace.score / 2);
+    }
+
     Players.insert({
       name: playerName,
-      score: 0,
+      score: bonuses,
       wins: 0,
       losses: 0,
       games: 0,
       playersPlayed: [],
+      bonuses: bonuses,
       queue: Queue.NONE,
       queueTime: Date.now()
     });
@@ -134,21 +141,25 @@ Meteor.methods({
       const matchId = Matches.insert({
         winnerId: pairing.player1Id,
         winnerName: pairing.player1Name,
+        winnerBonus: pairing.player1Bonus,
         loserId:  pairing.player2Id,
         loserName: pairing.player2Name,
+        loserBonus: pairing.player2Bonus,
         time: Date.now()
       });
       giveWin(pairing.player1Id,  pairing.player2Id, matchId);
-      giveLoss(pairing.player2Id, pairing.player1Id, matchId);
+      giveLoss(pairing.player2Id, pairing.player1Id, pairing.player2Bonus, matchId);
     } else {
       const matchId = Matches.insert({
         winnerId:  pairing.player2Id,
         winnerName: pairing.player2Name,
+        winnerBonus: pairing.player2Bonus,
         loserId: pairing.player1Id,
         loserName: pairing.player1Name,
+        loserBonus: pairing.player1Bonus,
         time: Date.now()
       });
-      giveLoss(pairing.player1Id,  pairing.player2Id, matchId);
+      giveLoss(pairing.player1Id,  pairing.player2Id, pairing.player1Bonus, matchId);
       giveWin(pairing.player2Id, pairing.player1Id, matchId);
     }
     Pairings.remove(pairingId);
@@ -172,13 +183,15 @@ Meteor.methods({
       throw new Meteor.Error("PRECONDITION_FAILED", "loser not unqueued");
     }
 
-    Players.update(match.winnerId, {$inc: {wins: -1, losses: 1, score: -1}});
-    Players.update(match.loserId, {$inc: {wins: 1, losses: -1, score: 1}});
+    Players.update(match.winnerId, {$inc: {score: match.winnerBonus ? -2 : -1, wins: -1, losses: 1}});
+    Players.update(match.loserId, {$inc: {score: match.loserBonus ? 2 : 1, wins: 1, losses: -1}});
     Matches.update(matchId, {$set: {
       winnerId: match.loserId,
       winnerName: match.loserName,
+      winnerBonus: match.loserBonus,
       loserId: match.winnerId,
-      loserName: match.winnerName
+      loserName: match.winnerName,
+      loserBonus: match.winnerBonus
     }});
   },
 
@@ -234,6 +247,7 @@ function queuePlayerCommon(playerId, setUnfixable) {
           score: player.score,
           player1Id: player._id,
           player1Name: player.name,
+          player1Bonus: player.bonuses > player.games,
           queue: Queue.WAITING,
           queueTime: Date.now()
         });
@@ -266,9 +280,9 @@ function findMatchInWaiting(queuingPlayer) {
 }
 
 function addPlayerToPairing(player, pairingId) {
-  Pairings.update(pairingId, {
-    $set: {player2Id: player._id, player2Name: player.name}
-  });
+  Pairings.update(pairingId, {$set: {
+    player2Id: player._id, player2Name: player.name, player2Bonus: player.bonuses > player.games
+  }});
 }
 
 function addNewPairingWithMatchedPlayer(player, matchedPlayer) {
@@ -277,8 +291,10 @@ function addNewPairingWithMatchedPlayer(player, matchedPlayer) {
     score: matchedPlayer.score,
     player1Id: matchedPlayer._id,
     player1Name: matchedPlayer.name,
+    player1Bonus: matchedPlayer.bonuses > matchedPlayer.games,
     player2Id: player._id,
     player2Name: player.name,
+    player2Bonus: player.bonuses > player.games,
     queue: Queue.WAITING,
     queueTime: Date.now()
   });
@@ -317,9 +333,9 @@ function giveWin(playerId, opponentId, matchId) {
   });
 }
 
-function giveLoss(playerId, opponentId, matchId) {
+function giveLoss(playerId, opponentId, bonus, matchId) {
   Players.update(playerId, {
-    $inc: {losses: 1, games: 1},
+    $inc: {score: bonus ? -1 : 0, losses: 1, games: 1},
     $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
     $addToSet: {playersPlayed: opponentId}
   });
