@@ -90,7 +90,7 @@ Meteor.methods({
   },
 
   queuePlayer: function(playerId) {
-    queuePlayerCommon(playerId);
+    queuePlayerCommon(playerId, true);
   },
 
   unqueueFromMatchmaking: function(playerId) {
@@ -110,12 +110,12 @@ Meteor.methods({
     if (quitterNumber === 1) {
       Players.update(pairing.player1Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
       if (pairing.player2Id) {
-        queuePlayerCommon(pairing.player2Id);
+        queuePlayerCommon(pairing.player2Id, false);
       }
       Pairings.remove(pairingId);
     } else {
       Players.update(pairing.player2Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-      queuePlayerCommon(pairing.player1Id);
+      queuePlayerCommon(pairing.player1Id, false);
       Pairings.remove(pairingId);
     }
   },
