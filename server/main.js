@@ -90,57 +90,7 @@ Meteor.methods({
   },
 
   queuePlayer: function(playerId) {
-    const player = Players.findOne(playerId);
-    if (!player) {
-      throw new Meteor.Error("BAD_REQUEST", "player not found");
-    }
-
-    if (player.wins >= player.losses) {
-      // go to matchmaking first, promote to waiting if match found.
-      let destinationQueue = Queue.MATCHMAKING;
-      const matchedPlayer = findMatchInMatchmaking(player);
-      if (matchedPlayer) {
-        // match with matchmaking player if possible.
-        destinationQueue = Queue.WAITING;
-        addNewPairingWithMatchedPlayer(player, matchedPlayer);
-      } else {
-        const pairingId = findMatchInWaiting(player);
-        if (pairingId) {
-          // fall-forward: match with waiting unpaired player if possible.
-          destinationQueue = Queue.WAITING;
-          addPlayerToPairing(player, pairingId);
-        }
-        // insert as matchmaking player.
-      }
-      Players.update(player._id, {$set: {queue: destinationQueue, queueTime: Date.now()}});
-    } else {
-      // go to waiting immediately and find a match later if necessary.
-      const pairingId = findMatchInWaiting(player);
-      if (pairingId) {
-        // match with waiting unpaired player if possible.
-        addPlayerToPairing(player, pairingId);
-      } else {
-        const matchedPlayer = findMatchInMatchmaking(player);
-        if (matchedPlayer) {
-          // fall-back: match with matchmaking player if possible.
-          addNewPairingWithMatchedPlayer(player, matchedPlayer);
-        } else {
-          // insert as waiting unpaired player.
-          Pairings.insert({
-            score: player.score,
-            player1Id: player._id,
-            player1Name: player.name,
-            queue: Queue.WAITING,
-            queueTime: Date.now()
-          });
-        }
-      }
-      Players.update(player._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
-    }
-    Matches.update(player.lastMatchId, {$set: {unfixable: true}});
-
-    // it's possible we moved a pairing to the front of the waiting queue
-    tryPromoteWaitingPairing();
+    queuePlayerCommon(playerId);
   },
 
   unqueueFromMatchmaking: function(playerId) {
@@ -160,30 +110,13 @@ Meteor.methods({
     if (quitterNumber === 1) {
       Players.update(pairing.player1Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
       if (pairing.player2Id) {
-        if (pairing.score >= SCORE_THRESHOLD) {
-          Players.update(pairing.player2Id, {
-            $set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}
-          });
-          Pairings.remove(pairingId);
-        } else {
-          Pairings.update(pairingId, {
-            $set: {player1Id: pairing.player2Id, player1Name: pairing.player2Name},
-            $unset: {player2Id: "", player2Name: ""}
-          });
-        }
-      } else {
-        Pairings.remove(pairingId);
+        queuePlayerCommon(pairing.player2Id);
       }
+      Pairings.remove(pairingId);
     } else {
       Players.update(pairing.player2Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-      if (pairing.score >= SCORE_THRESHOLD) {
-        Players.update(pairing.player1Id, {
-          $set: {queue: Queue.MATCHMAKING, queueTime: Date.now()}
-        });
-        Pairings.remove(pairingId);
-      } else {
-        Pairings.update(pairingId, {$unset: {player2Id: "", player2Name: ""}});
-      }
+      queuePlayerCommon(pairing.player1Id);
+      Pairings.remove(pairingId);
     }
   },
 
@@ -256,6 +189,63 @@ Meteor.methods({
     Matches.remove({});
 	},
 });
+
+function queuePlayerCommon(playerId, setUnfixable) {
+  const player = Players.findOne(playerId);
+  if (!player) {
+    throw new Meteor.Error("BAD_REQUEST", "player not found");
+  }
+
+  if (setUnfixable) {
+    Matches.update(player.lastMatchId, {$set: {unfixable: true}}); 
+  }
+
+  let destinationQueue = Queue.MATCHMAKING;
+  if (player.wins >= player.losses) {
+    // go to matchmaking first, promote to waiting if match found.
+    const matchedPlayer = findMatchInMatchmaking(player);
+    if (matchedPlayer) {
+      // match with matchmaking player if possible.
+      destinationQueue = Queue.WAITING;
+      addNewPairingWithMatchedPlayer(player, matchedPlayer);
+    } else {
+      const pairingId = findMatchInWaiting(player);
+      if (pairingId) {
+        // fall-forward: match with waiting unpaired player if possible.
+        destinationQueue = Queue.WAITING;
+        addPlayerToPairing(player, pairingId);
+      }
+      // insert as matchmaking player.
+    }
+  } else {
+    // go to waiting immediately and find a match later if necessary.
+    const pairingId = findMatchInWaiting(player);
+    if (pairingId) {
+      // match with waiting unpaired player if possible.
+      addPlayerToPairing(player, pairingId);
+    } else {
+      const matchedPlayer = findMatchInMatchmaking(player);
+      if (matchedPlayer) {
+        // fall-back: match with matchmaking player if possible.
+        addNewPairingWithMatchedPlayer(player, matchedPlayer);
+      } else {
+        // insert as waiting unpaired player.
+        Pairings.insert({
+          score: player.score,
+          player1Id: player._id,
+          player1Name: player.name,
+          queue: Queue.WAITING,
+          queueTime: Date.now()
+        });
+      }
+    }
+    destinationQueue = Queue.WAITING;
+  }
+  Players.update(player._id, {$set: {queue: destinationQueue, queueTime: Date.now()}});
+  if (destinationQueue === Queue.WAITING) {
+    tryPromoteWaitingPairing();
+  }
+}
 
 function findMatch(queuingPlayer, matchmakingFirst) {
   if (matchmakingFirst) {
