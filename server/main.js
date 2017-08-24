@@ -235,8 +235,8 @@ Meteor.methods({
       throw new Meteor.Error("PRECONDITION_FAILED", "loser not unqueued");
     }
 
-    Players.update(match.winnerId, {$inc: {wins: -1, losses: 1, score: -2}});
-    Players.update(match.loserId, {$inc: {wins: 1, losses: -1, score: 2}});
+    Players.update(match.winnerId, {$inc: {wins: -1, losses: 1, score: -1}});
+    Players.update(match.loserId, {$inc: {wins: 1, losses: -1, score: 1}});
     Matches.update(matchId, {$set: {
       winnerId: match.loserId,
       winnerName: match.loserName,
@@ -320,7 +320,7 @@ function giveWin(playerId, opponentId, matchId) {
 
 function giveLoss(playerId, opponentId, matchId) {
   Players.update(playerId, {
-    $inc: {score: -1, losses: 1, games: 1},
+    $inc: {losses: 1, games: 1},
     $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
     $addToSet: {playersPlayed: opponentId}
   });
