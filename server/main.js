@@ -213,7 +213,7 @@ function queuePlayerCommon(playerId, setUnfixable) {
   }
 
   let destinationQueue = Queue.MATCHMAKING;
-  if (player.wins >= player.losses) {
+  if (player.games >= player.bonuses) {
     // go to matchmaking first, promote to waiting if match found.
     const matchedPlayer = findMatchInMatchmaking(player);
     if (matchedPlayer) {
