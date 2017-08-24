@@ -214,7 +214,7 @@ function queuePlayerCommon(playerId, setUnfixable) {
 
   let destinationQueue = Queue.MATCHMAKING;
   if (player.games >= player.bonuses) {
-    // go to matchmaking first, promote to waiting if match found.
+    // normal queue: go to matchmaking first, promote to waiting if match found.
     const matchedPlayer = findMatchInMatchmaking(player);
     if (matchedPlayer) {
       // match with matchmaking player if possible.
@@ -230,7 +230,7 @@ function queuePlayerCommon(playerId, setUnfixable) {
       // insert as matchmaking player.
     }
   } else {
-    // go to waiting immediately and find a match later if necessary.
+    // priority queue: go to waiting immediately and find a match later if necessary.
     const pairingId = findMatchInWaiting(player);
     if (pairingId) {
       // match with waiting unpaired player if possible.
