@@ -42,6 +42,10 @@ Template.body.helpers({
   'matches': function() {
     return Matches.find({}, {sort: [['time', 'desc']]});
   },
+
+  'hasBonuses': function(bonuses, games) {
+    return bonuses > games;
+  },
 });
 
 Template.body.events({

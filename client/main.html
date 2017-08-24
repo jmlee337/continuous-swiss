@@ -27,7 +27,7 @@
             <td>
               <label>
                 <input type="radio" form="playing{{_id}}" name="winner" value="player1">
-                {{player1Name}}
+                {{player1Name}}{{#if player1Bonus}}*{{/if}}
               </label>
             </td>
             <td rowspan="2">
@@ -41,7 +41,7 @@
             <td>
               <label>
                 <input type="radio" form="playing{{_id}}" name="winner" value="player2">
-                {{player2Name}}
+                {{player2Name}}{{#if player2Bonus}}*{{/if}}
               </label>
             </td>
           </tr>
@@ -58,7 +58,7 @@
                 <form class="unqueueWaiting" id="waiting{{player1Id}}">
                   <input type="hidden" name="pairingId" value="{{_id}}">
                   <input type="hidden" name="quitter" value="player1">
-                  {{player1Name}}
+                  {{player1Name}}{{#if player1Bonus}}*{{/if}}
                 </form>
               </td>
               <td rowspan="2">{{score}}</td>
@@ -73,7 +73,7 @@
                 <form class="unqueueWaiting" id="waiting{{player2Id}}">
                   <input type="hidden" name="pairingId" value="{{_id}}">
                   <input type="hidden" name="quitter" value="player2">
-                  {{player2Name}}
+                  {{player2Name}}{{#if player2Bonus}}*{{/if}}
                 </form>
               </td>
               <td><button type="submit" form="waiting{{player2Id}}">Unqueue</button></td>
@@ -89,7 +89,7 @@
       <table class="withButtons">
         {{#each matchmaking}}
           <tr>
-            <td>{{name}}</td>
+            <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
             <td>{{score}}</td>
             <td>
               <button class="unqueueMatchmaking" type="button" value="{{_id}}">Unqueue</button>
@@ -102,7 +102,7 @@
       <table class="withButtons">
         {{#each unqueued}}
           <tr>
-            <td>{{name}}</td>
+            <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
             <td>
               {{#if games}}
                 <button type="button" disabled>x</button>
@@ -122,7 +122,7 @@
         <tbody>
           {{#each standings}}
             <tr>
-              <td>{{name}}</td>
+              <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
               <td>{{score}}</td>
               <td>{{wins}}</td>
               <td>{{losses}}</td>
@@ -138,8 +138,8 @@
         <tbody>
           {{#each matches}}
             <tr>
-              <td>{{winnerName}}</td>
-              <td>{{loserName}}</td>
+              <td>{{winnerName}}{{#if winnerBonus}}*{{/if}}</td>
+              <td>{{loserName}}{{#if loserBonus}}*{{/if}}</td>
               <td>
                 {{#if unfixable}}
                   <button type="button" disabled>&#x21c4;</button>
