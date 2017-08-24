@@ -1,3 +1,4 @@
+import {HTTP} from 'meteor/http';
 import {Meteor} from 'meteor/meteor';
 
 import {Matches} from '../lib/collections.js';
@@ -6,6 +7,7 @@ import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
 import {Setups} from '../lib/collections.js';
 
+const URL_BASE = "https://api.smash.gg/";
 const SCORE_THRESHOLD = 0;
 
 Meteor.methods({
@@ -47,6 +49,44 @@ Meteor.methods({
 
   removePlayer: function(playerId) {
     Players.remove(playerId);
+  },
+
+  addFromSmashgg: function(slug) {
+    // TODO: something with this eventually I guess.
+    const entities =
+        HTTP.get(URL_BASE + "tournament/" + slug + "?expand[]=groups&expand[]=phase&expand[]=event")
+            .data.entities;
+    if (!entities.groups) {
+      return;
+    }
+    const groups = entities.groups.filter((group) => {
+      return group.groupTypeId === 6;
+    });
+    for (let i = 0; i < groups.length; i++) {
+      const group = groups[i];
+      const groupEntities =
+          HTTP.get(URL_BASE + "phase_group/" + group.id + "?expand[]=entrants").data.entities;
+      if (!groupEntities.entrants) {
+        continue;
+      }
+      const entrantNames = groupEntities.entrants.map((entrant) => {
+        return entrant.name;
+      })
+
+      const phase = entities.phase.filter((phase) => {
+        return phase.id === group.phaseId; 
+      })[0];
+
+      const event = entities.event.filter((event) => {
+        return event.id === phase.eventId;
+      })[0];
+
+      console.log(entities.tournament.name);
+      console.log(event.name);
+      console.log(phase.name);
+      console.log(group.displayIdentifier);
+      console.log(entrantNames);
+    }
   },
 
   queuePlayer: function(playerId) {
