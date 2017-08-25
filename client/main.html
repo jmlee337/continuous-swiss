@@ -3,6 +3,26 @@
 </head>
 
 <body>
+</body>
+
+<template name="appBody">
+  {{> Template.dynamic template=main}}
+</template>
+
+<template name="laddersPage">
+  <form class="createLadder">
+    <input type="text" name="ladderName" placeholder="New ladder name">
+  </form>
+  <br/>
+  {{#each ladders}}
+    <div><a href="ladder/{{slug}}">{{name}}</a></div>
+  {{/each}}
+  <br/>
+  <button class="clearDb" type="button">Clear DB</button>
+</template>
+
+<template name="ladderPage">
+  <h1>{{ladderName}}</h1>
   <form class="addPlayer">
     <input type="text" name="playerName" placeholder="New player name">
   </form>
@@ -15,7 +35,6 @@
       {{/each}}
     {{/if}}
   </div>
-  <button class="clear" type="button">Clear DB</button>
 
   <div class="container">
     <div class="column">
@@ -153,4 +172,4 @@
       </table>
     </div>
   </div>
-</body>
+</template>

@@ -11,6 +11,7 @@ import {Queue} from '../lib/queue.js';
 import {Setups} from '../lib/collections.js';
 
 const URL_BASE = "https://api.smash.gg/";
+slug.defaults.mode ='rfc3986';
 
 Meteor.methods({
   createLadder: function(name) {
@@ -18,40 +19,43 @@ Meteor.methods({
     if (Ladders.findOne({slug: ladderSlug})) {
       throw new Meteor.Error("BAD_REQUEST", "name matches existing tournament");
     }
-    return Ladders.insert({slug: ladderSlug, name: name});
+    Ladders.insert({slug: ladderSlug, name: name});
+    return ladderSlug;
   },
 
-  addSetup: function() {
-    const setups = Setups.find({}, {sort: [['number', 'asc']]}).fetch();
+  addSetup: function(ladderId) {
+    const setups = Setups.find({ladderId: ladderId}, {sort: [['number', 'asc']]}).fetch();
     if (setups.length === 0) {
-      Setups.insert({number: 1});
+      Setups.insert({ladderId: ladderId, number: 1});
     } else if (setups[setups.length - 1].number === setups.length) {
       // if there's no gap in numbering, add the new setup at the end.
-      Setups.insert({number: setups.length + 1});
+      Setups.insert({ladderId: ladderId, number: setups.length + 1});
     } else {
       // there's a gap somewhere, find it and fill it.
       for (let i = 0; i < setups.length; i++) {
         if (setups[i].number !== i + 1) {
-          Setups.insert({number: i + 1});
+          Setups.insert({ladderId: ladderId, number: i + 1});
           return;
         }
       }
     }
-    tryPromoteWaitingPairing();
+    tryPromoteWaitingPairing(ladderId);
   },
 
-  removeSetup: function(setupId) {
+  removeSetup: function(ladderId, setupId) {
     Setups.remove(setupId);
   },
 
-  addPlayer: function(playerName) {
+  addPlayer: function(ladderId, playerName) {
     let bonuses = 0;
-    const firstPlace = Players.find({bonuses: 0}, {sort: [['score', 'desc']]}).fetch()[0];
+    const firstPlace = 
+        Players.find({ladderId: ladderId, bonuses: 0}, {sort: [['score', 'desc']]}).fetch()[0];
     if (firstPlace) {
       bonuses = Math.floor(firstPlace.score / 2);
     }
 
     Players.insert({
+      ladderId: ladderId,
       name: playerName,
       score: bonuses,
       wins: 0,
@@ -64,11 +68,11 @@ Meteor.methods({
     });
   },
 
-  removePlayer: function(playerId) {
+  removePlayer: function(ladderId, playerId) {
     Players.remove(playerId);
   },
 
-  addFromSmashgg: function(slug) {
+  addFromSmashgg: function(ladderId, slug) {
     // TODO: something with this eventually I guess.
     const entities =
         HTTP.get(URL_BASE + "tournament/" + slug + "?expand[]=groups&expand[]=phase&expand[]=event")
@@ -106,16 +110,16 @@ Meteor.methods({
     }
   },
 
-  queuePlayer: function(playerId) {
-    queuePlayerCommon(playerId, true);
+  queuePlayer: function(ladderId, playerId) {
+    queuePlayerCommon(ladderId, playerId, true);
   },
 
-  unqueueFromMatchmaking: function(playerId) {
+  unqueueFromMatchmaking: function(ladderId, playerId) {
     Players.update(playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
   },
 
   // quitterNumber: 1 or 2 (player 1/player 2)
-  unqueueFromWaiting: function(pairingId, quitterNumber) {
+  unqueueFromWaiting: function(ladderId, pairingId, quitterNumber) {
     if (!(quitterNumber === 1 || quitterNumber === 2)) {
       throw new Meteor.Error("BAD_REQUEST", "quitter number not 1 or 2");
     }
@@ -127,18 +131,18 @@ Meteor.methods({
     if (quitterNumber === 1) {
       Players.update(pairing.player1Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
       if (pairing.player2Id) {
-        queuePlayerCommon(pairing.player2Id, false);
+        queuePlayerCommon(ladderId, pairing.player2Id, false);
       }
       Pairings.remove(pairingId);
     } else {
       Players.update(pairing.player2Id, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-      queuePlayerCommon(pairing.player1Id, false);
+      queuePlayerCommon(ladderId, pairing.player1Id, false);
       Pairings.remove(pairingId);
     }
   },
 
   // winnerNumber: 1 or 2 (player 1/player 2)
-  submitWinner: function(pairingId, winnerNumber) {
+  submitWinner: function(ladderId, pairingId, winnerNumber) {
     if (!(winnerNumber === 1 || winnerNumber === 2)) {
       throw new Meteor.Error("BAD_REQUEST", "winner number not 1 or 2");
     }
@@ -149,6 +153,7 @@ Meteor.methods({
 
     if (winnerNumber === 1) {
       const matchId = Matches.insert({
+        ladderId: ladderId,
         winnerId: pairing.player1Id,
         winnerName: pairing.player1Name,
         winnerBonus: pairing.player1Bonus,
@@ -161,6 +166,7 @@ Meteor.methods({
       giveLoss(pairing.player2Id, pairing.player1Id, pairing.player2Bonus, matchId);
     } else {
       const matchId = Matches.insert({
+        ladderId: ladderId,
         winnerId:  pairing.player2Id,
         winnerName: pairing.player2Name,
         winnerBonus: pairing.player2Bonus,
@@ -175,10 +181,10 @@ Meteor.methods({
     Pairings.remove(pairingId);
     Setups.update(pairing.setupId, {$unset: {pairingId: ""}});
 
-    tryPromoteWaitingPairing();
+    tryPromoteWaitingPairing(ladderId);
   },
 
-  fixMatch: function(matchId) {
+  fixMatch: function(ladderId, matchId) {
     const match = Matches.findOne(matchId);
     if (!match) {
       throw new Meteor.Error("BAD_REQUEST", "match not found");
@@ -214,7 +220,7 @@ Meteor.methods({
 	},
 });
 
-function queuePlayerCommon(playerId, setUnfixable) {
+function queuePlayerCommon(ladderId, playerId, setUnfixable) {
   const player = Players.findOne(playerId);
   if (!player) {
     throw new Meteor.Error("BAD_REQUEST", "player not found");
@@ -227,13 +233,13 @@ function queuePlayerCommon(playerId, setUnfixable) {
   let destinationQueue = Queue.MATCHMAKING;
   if (player.games >= player.bonuses) {
     // normal queue: go to matchmaking first, promote to waiting if match found.
-    const matchedPlayer = findMatchInMatchmaking(player);
+    const matchedPlayer = findMatchInMatchmaking(ladderId, player);
     if (matchedPlayer) {
       // match with matchmaking player if possible.
       destinationQueue = Queue.WAITING;
-      addNewPairingWithMatchedPlayer(player, matchedPlayer);
+      addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer);
     } else {
-      const pairingId = findMatchInWaiting(player);
+      const pairingId = findMatchInWaiting(ladderId, player);
       if (pairingId) {
         // fall-forward: match with waiting unpaired player if possible.
         destinationQueue = Queue.WAITING;
@@ -243,18 +249,19 @@ function queuePlayerCommon(playerId, setUnfixable) {
     }
   } else {
     // priority queue: go to waiting immediately and find a match later if necessary.
-    const pairingId = findMatchInWaiting(player);
+    const pairingId = findMatchInWaiting(ladderId, player);
     if (pairingId) {
       // match with waiting unpaired player if possible.
       addPlayerToPairing(player, pairingId);
     } else {
-      const matchedPlayer = findMatchInMatchmaking(player);
+      const matchedPlayer = findMatchInMatchmaking(ladderId, player);
       if (matchedPlayer) {
         // fall-back: match with matchmaking player if possible.
-        addNewPairingWithMatchedPlayer(player, matchedPlayer);
+        addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer);
       } else {
         // insert as waiting unpaired player.
         Pairings.insert({
+          ladderId: ladderId,
           score: player.score,
           player1Id: player._id,
           player1Name: player.name,
@@ -268,23 +275,26 @@ function queuePlayerCommon(playerId, setUnfixable) {
   }
   Players.update(player._id, {$set: {queue: destinationQueue, queueTime: Date.now()}});
   if (destinationQueue === Queue.WAITING) {
-    tryPromoteWaitingPairing();
+    tryPromoteWaitingPairing(ladderId);
   }
 }
 
 // Player
-function findMatchInMatchmaking(queuingPlayer) {
+function findMatchInMatchmaking(ladderId, queuingPlayer) {
   return Players.find({
-    queue: Queue.MATCHMAKING, score: queuingPlayer.score
+    ladderId: ladderId, queue: Queue.MATCHMAKING, score: queuingPlayer.score
   }, {
     sort: [['queueTime', 'asc']]
   }).fetch().filter(matchedPlayer => !queuingPlayer.playersPlayed.includes(matchedPlayer._id))[0];
 }
 
 // Pairing._id
-function findMatchInWaiting(queuingPlayer) {
+function findMatchInWaiting(ladderId, queuingPlayer) {
   return Pairings.find({
-    queue: Queue.WAITING, score: queuingPlayer.score, player2Id: {$exists: false}
+    ladderId: ladderId,
+    queue: Queue.WAITING,
+    score: queuingPlayer.score,
+    player2Id: {$exists: false}
   }, {
     sort: [['queueTime', 'asc']]
   }).fetch().filter(pairing => !queuingPlayer.playersPlayed.includes(pairing.player1Id))[0];
@@ -296,9 +306,10 @@ function addPlayerToPairing(player, pairingId) {
   }});
 }
 
-function addNewPairingWithMatchedPlayer(player, matchedPlayer) {
+function addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer) {
   Players.update(matchedPlayer._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
   Pairings.insert({
+    ladderId: ladderId,
     score: matchedPlayer.score,
     player1Id: matchedPlayer._id,
     player1Name: matchedPlayer.name,
@@ -312,9 +323,14 @@ function addNewPairingWithMatchedPlayer(player, matchedPlayer) {
 }
 
 // void
-function tryPromoteWaitingPairing() {
-  const setups = Setups.find({pairingId: {$exists: false}}, {sort: [['number', 'asc']]}).fetch();
+function tryPromoteWaitingPairing(ladderId) {
+  const setups = Setups.find({
+    ladderId: ladderId, pairingId: {$exists: false}
+  }, {
+    sort: [['number', 'asc']]
+  }).fetch();
   const pairings = Pairings.find({
+    ladderId: ladderId,
     queue: Queue.WAITING,
     player1Id: {$exists: true},
     player2Id: {$exists: true}
