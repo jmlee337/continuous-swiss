@@ -1,6 +1,9 @@
+import slug from 'slug';
+
 import {HTTP} from 'meteor/http';
 import {Meteor} from 'meteor/meteor';
 
+import {Ladders} from '../lib/collections.js';
 import {Matches} from '../lib/collections.js';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
@@ -10,6 +13,14 @@ import {Setups} from '../lib/collections.js';
 const URL_BASE = "https://api.smash.gg/";
 
 Meteor.methods({
+  createLadder: function(name) {
+    const ladderSlug = slug(name);
+    if (Ladders.findOne({slug: ladderSlug})) {
+      throw new Meteor.Error("BAD_REQUEST", "name matches existing tournament");
+    }
+    return Ladders.insert({slug: ladderSlug, name: name});
+  },
+
   addSetup: function() {
     const setups = Setups.find({}, {sort: [['number', 'asc']]}).fetch();
     if (setups.length === 0) {
@@ -195,7 +206,8 @@ Meteor.methods({
   },
 
 	clearDb: function() {
-		Players.remove({});
+    Ladders.remove({});
+    Players.remove({});
     Pairings.remove({});
     Setups.remove({});
     Matches.remove({});
