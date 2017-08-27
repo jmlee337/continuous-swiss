@@ -22,7 +22,7 @@ Template.laddersPage.helpers({
 });
 
 Template.laddersPage.events({
-  'submit .createLadder': function(event, instance) {
+  'submit .createLadder': function(event) {
     Meteor.call('createLadder', event.target.ladderName.value, (err, slug) => {
       if (err) {
 
@@ -33,7 +33,7 @@ Template.laddersPage.events({
     return false;
   },
 
-  'click .clearDb': function(event, instance) {
+  'click .clearDb': function(event) {
     Meteor.call('clearDb');
   },
 });
@@ -57,7 +57,6 @@ Template.ladderPage.onCreated(function() {
       }
     }
   });
-
 });
 
 Template.ladderPage.helpers({
@@ -65,20 +64,32 @@ Template.ladderPage.helpers({
     return Template.instance().dict.get('name');
   },
 
-	'unqueued': function() {
+  'unqueued': function() {
     return Players.find({queue: Queue.NONE}, {sort: [['queueTime', 'asc']]});
   },
 
   'matchmaking': function() {
-    return Players.find({queue: Queue.MATCHMAKING}, {sort: [['queueTime', 'asc']]});
+    return Players.find({
+      queue: Queue.MATCHMAKING,
+    }, {
+      sort: [['queueTime', 'asc']],
+    });
   },
 
   'waiting': function() {
-    return Pairings.find({queue: Queue.WAITING}, {sort: [['queueTime', 'asc']]});
+    return Pairings.find({
+      queue: Queue.WAITING,
+    }, {
+      sort: [['queueTime', 'asc']],
+    });
   },
 
   'playing': function() {
-    return Pairings.find({queue: Queue.PLAYING}, {sort: [['queueTime', 'asc']]});
+    return Pairings.find({
+      queue: Queue.PLAYING,
+    }, {
+      sort: [['queueTime', 'asc']],
+    });
   },
 
   'standings': function() {
@@ -105,52 +116,73 @@ Template.ladderPage.helpers({
 });
 
 Template.ladderPage.events({
-  'submit .addPlayer': function(event, instance) {
+  'submit .addPlayer': function(event, templateInstance) {
     const playerName = event.target.playerName;
-    Meteor.call('addPlayer', instance.dict.get('id'), playerName.value);
-    playerName.value = "";
+    Meteor.call('addPlayer', templateInstance.dict.get('id'), playerName.value);
+    playerName.value = '';
     return false;
   },
 
-  'click .removePlayer': function(event, instance) {
-    Meteor.call('removePlayer', instance.dict.get('id'), event.target.value);
+  'click .removePlayer': function(event, templateInstance) {
+    Meteor.call(
+        'removePlayer', templateInstance.dict.get('id'), event.target.value);
   },
 
-  'click .addSetup': function(event, instance) {
-    Meteor.call('addSetup', instance.dict.get('id'));
+  'click .addSetup': function(event, templateInstance) {
+    Meteor.call('addSetup', templateInstance.dict.get('id'));
   },
 
-  'click .removeSetup': function(event, instance) {
-    Meteor.call('removeSetup', instance.dict.get('id'), event.target.value);
+  'click .removeSetup': function(event, templateInstance) {
+    Meteor.call(
+        'removeSetup', templateInstance.dict.get('id'), event.target.value);
   },
 
-  'click .queuePlayer': function(event, instance) {
-    Meteor.call('queuePlayer', instance.dict.get('id'), event.target.value);
+  'click .queuePlayer': function(event, templateInstance) {
+    Meteor.call(
+        'queuePlayer', templateInstance.dict.get('id'), event.target.value);
   },
 
-  'click .unqueueMatchmaking': function(event, instance) {
-    Meteor.call('unqueueFromMatchmaking', instance.dict.get('id'), event.target.value);
+  'click .unqueueMatchmaking': function(event, templateInstance) {
+    Meteor.call(
+        'unqueueFromMatchmaking',
+        templateInstance.dict.get('id'),
+        event.target.value);
   },
 
-  'submit .unqueueWaiting': function(event, instance) {
+  'submit .unqueueWaiting': function(event, templateInstance) {
     if (event.target.quitter.value === 'player1') {
-      Meteor.call('unqueueFromWaiting', instance.dict.get('id'), event.target.pairingId.value, 1);
+      Meteor.call(
+          'unqueueFromWaiting',
+          templateInstance.dict.get('id'),
+          event.target.pairingId.value, 1);
     } else if (event.target.quitter.value === 'player2') {
-      Meteor.call('unqueueFromWaiting', instance.dict.get('id'), event.target.pairingId.value, 2);
+      Meteor.call(
+          'unqueueFromWaiting',
+          templateInstance.dict.get('id'),
+          event.target.pairingId.value, 2);
     }
     return false;
   },
 
-  'submit .winPlayer': function(event, instance) {
+  'submit .winPlayer': function(event, templateInstance) {
     if (event.target.winner.value === 'player1') {
-      Meteor.call('submitWinner', instance.dict.get('id'), event.target.pairingId.value, 1);
+      Meteor.call(
+          'submitWinner',
+          templateInstance.dict.get('id'),
+          event.target.pairingId.value,
+          1);
     } else if (event.target.winner.value === 'player2') {
-      Meteor.call('submitWinner', instance.dict.get('id'), event.target.pairingId.value, 2);
+      Meteor.call(
+          'submitWinner',
+          templateInstance.dict.get('id'),
+          event.target.pairingId.value,
+          2);
     }
     return false;
   },
 
-  'click .fixMatch': function(event, instance) {
-    Meteor.call('fixMatch', instance.dict.get('id'), event.target.value);
+  'click .fixMatch': function(event, templateInstance) {
+    Meteor.call(
+        'fixMatch', templateInstance.dict.get('id'), event.target.value);
   },
 });
