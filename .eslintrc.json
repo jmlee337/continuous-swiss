@@ -1,9 +1,16 @@
 {
-  "extends": ["google", "plugin:meteor/recommended"],
+  "extends": [
+    "google",
+    "plugin:meteor/recommended"
+  ],
   "parser": "babel-eslint",
   "plugins": ["meteor"],
   "rules": {
     "linebreak-style": 0,
+    "no-invalid-this": 0,
     "require-jsdoc": 0
+  },
+  "settings": {
+    "import/resolver": "meteor"
   }
 }
