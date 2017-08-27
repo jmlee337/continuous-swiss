@@ -176,6 +176,10 @@
     </div>
   {{else}}
     <br/>
+    <form class="importFromSmashgg">
+      <input type="text" name="slug" placeholder="Import from Smash.gg">
+    </form>
+    <br/>
     <button class="startLadder" type="button">Start</button>
     <div class="container">
       <div class="column">
@@ -187,7 +191,21 @@
         </table>
       </div>
       <div class="column">
-
+        {{#if smashggImport}}
+          <h3>{{smashggImport.name}}</h3>
+          {{#if smashggImport.pool}}
+            {{#with smashggImport.pool}}
+              <h4>{{event}}, {{phase}}, {{group}}</h4>
+              <button class="addAll" type="button">Add all</button>
+              <button class="nextPoolIndex" type="button">Next</button>
+              <table class="withButtons">
+                {{#each entrant in entrants}}
+                  <tr><td>{{entrant}}</td></tr>
+                {{/each}}
+              </table>
+            {{/with}}
+          {{/if}}
+        {{/if}}
       </div>
     </div>
   {{/if}}

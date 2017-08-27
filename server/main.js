@@ -12,8 +12,13 @@ import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
 import {Setups} from '../lib/collections.js';
 
-const URL_BASE = 'https://api.smash.gg/';
 slug.defaults.mode ='rfc3986';
+
+const URL_BASE = 'https://api.smash.gg/';
+const TOURNAMENT_BASE = URL_BASE + 'tournament/';
+const TOURNAMENT_QUERY = '?expand[]=groups&expand[]=phase&expand[]=event';
+const GROUP_BASE = URL_BASE + 'phase_group/';
+const GROUP_QUERY = '?expand[]=entrants';
 
 Meteor.methods({
   createLadder: function(name) {
@@ -25,6 +30,74 @@ Meteor.methods({
     }
     Ladders.insert({slug: ladderSlug, name: name, started: false});
     return ladderSlug;
+  },
+
+  importFromSmashgg: function(slug) {
+    check(slug, String);
+
+    const tournamentUrl = TOURNAMENT_BASE + slug + TOURNAMENT_QUERY;
+    const tournamentRes = HTTP.get(tournamentUrl);
+    if (!tournamentRes.data.entities.groups) {
+      return;
+    }
+
+    const smashggImport = {
+      name: tournamentRes.data.entities.tournament.name,
+      pools: [],
+    };
+    tournamentRes.data.entities.groups.filter((group) => {
+      return group.groupTypeId === 6;
+    }).forEach((group) => {
+      const groupUrl = GROUP_BASE + group.id + GROUP_QUERY;
+      const entities = HTTP.get(groupUrl).data.entities;
+      if (!entities || !entities.entrants || entities.entrants.length === 0) {
+        return;
+      }
+
+      const phase = tournamentRes.data.entities.phase.filter((phase) => {
+        return phase.id === group.phaseId;
+      })[0];
+      const event = tournamentRes.data.entities.event.filter((event) => {
+        return event.id === phase.eventId;
+      })[0];
+      const entrantNames = entities.entrants.map((entrant) => {
+        return entrant.name;
+      });
+
+      smashggImport.pools.push({
+        event: event ? event.name : '',
+        phase: phase ? phase.name : '',
+        group: group.displayIdentifier,
+        entrants: entrantNames,
+      });
+    });
+
+    return smashggImport;
+  },
+
+  addAllPlayers: function(ladderId, playerNames) {
+    check(ladderId, String);
+    check(playerNames, [String]);
+
+    if (Ladders.findOne(ladderId).started) {
+      throw new Meteor.Error('PRECONDITION_FAILED', 'ladder already started');
+    }
+    const bulkInsert = Players.rawCollection().initializeUnorderedBulkOp();
+    playerNames.forEach((playerName) => {
+      bulkInsert.insert({
+        ladderId: ladderId,
+        name: playerName,
+        score: 0,
+        wins: 0,
+        losses: 0,
+        games: 0,
+        playersPlayed: [],
+        bonuses: 0,
+        queue: Queue.NONE,
+        queueTime: Date.now(),
+      });
+    });
+    bulkInsert.execute();
   },
 
   startLadder: function(ladderId) {
@@ -95,51 +168,6 @@ Meteor.methods({
     check(playerId, String);
 
     Players.remove(playerId);
-  },
-
-  addFromSmashgg: function(ladderId, slug) {
-    check(ladderId, String);
-    check(slug, String);
-
-    // TODO: something with this eventually I guess.
-    const entities =
-        HTTP.get(
-            URL_BASE +
-            'tournament/' +
-             slug +
-             '?expand[]=groups&expand[]=phase&expand[]=event').data.entities;
-    if (!entities.groups) {
-      return;
-    }
-    const groups = entities.groups.filter((group) => {
-      return group.groupTypeId === 6;
-    });
-    for (let i = 0; i < groups.length; i++) {
-      const group = groups[i];
-      const groupEntities =
-          HTTP.get(URL_BASE + 'phase_group/' + group.id + '?expand[]=entrants')
-              .data.entities;
-      if (!groupEntities.entrants) {
-        continue;
-      }
-      const entrantNames = groupEntities.entrants.map((entrant) => {
-        return entrant.name;
-      });
-
-      const phase = entities.phase.filter((phase) => {
-        return phase.id === group.phaseId;
-      })[0];
-
-      const event = entities.event.filter((event) => {
-        return event.id === phase.eventId;
-      })[0];
-
-      console.log(entities.tournament.name);
-      console.log(event.name);
-      console.log(phase.name);
-      console.log(group.displayIdentifier);
-      console.log(entrantNames);
-    }
   },
 
   queuePlayer: function(ladderId, playerId) {

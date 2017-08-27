@@ -40,6 +40,7 @@ Template.laddersPage.events({
 
 Template.ladderPage.onCreated(function() {
   this.dict = new ReactiveDict();
+  this.dict.set('poolIndex', 0);
   const handle = this.subscribe('ladders');
   this.slug = () => FlowRouter.getParam('slug');
 
@@ -65,7 +66,16 @@ Template.ladderPage.helpers({
   },
 
   'started': function() {
-    return Ladders.findOne(Template.instance().dict.get('id')).started;
+    const ladder = Ladders.findOne(Template.instance().dict.get('id'));
+    return ladder ? ladder.started : false;
+  },
+
+  'smashggImport': function() {
+    const smashggImport = Template.instance().dict.get('smashggImport');
+    return smashggImport ? {
+      name: smashggImport.name,
+      pool: smashggImport.pools[Template.instance().dict.get('poolIndex')],
+    } : undefined;
   },
 
   'players': function() {
@@ -143,6 +153,49 @@ Template.ladderPage.events({
   'click .removeSetup': function(event, templateInstance) {
     Meteor.call(
         'removeSetup', templateInstance.dict.get('id'), event.target.value);
+  },
+
+  'submit .importFromSmashgg': function(event, templateInstance) {
+    Meteor.call('importFromSmashgg', event.target.slug.value, (err, res) => {
+      if (err) {
+
+      } else if (res) {
+        templateInstance.dict.set('smashggImport', res);
+      }
+    });
+    return false;
+  },
+
+  'click .addAll': function(event, templateInstance) {
+    const smashggImport = templateInstance.dict.get('smashggImport');
+    if (!smashggImport) {
+      return;
+    }
+    const entrants =
+        smashggImport.pools[templateInstance.dict.get('poolIndex')].entrants;
+    if (entrants.length === 0) {
+      return;
+    }
+
+    const ladderId = templateInstance.dict.get('id');
+    Meteor.call('addAllPlayers', ladderId, entrants, (err) => {
+      if (!err) {
+        templateInstance.dict.set('smashggImport', undefined);
+        templateInstance.dict.set('poolIndex', 0);
+      }
+    });
+  },
+
+  'click .incPoolIndex': function(event, templateInstance) {
+    const smashggImport = templateInstance.dict.get('smashggImport');
+    if (!smashggImport) {
+      return;
+    }
+    let nextPoolIndex = templateInstance.dict.get('poolIndex') + 1;
+    if (nextPoolIndex >= smashggImport.pools.length) {
+      nextPoolIndex = 0;
+    }
+    templateInstance.dict.set('poolIndex', nextPoolIndex);
   },
 
   'click .startLadder': function(event, templateInstance) {
