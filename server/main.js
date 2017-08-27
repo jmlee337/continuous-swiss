@@ -82,9 +82,8 @@ Meteor.methods({
     if (Ladders.findOne(ladderId).started) {
       throw new Meteor.Error('PRECONDITION_FAILED', 'ladder already started');
     }
-    const bulkInsert = Players.rawCollection().initializeUnorderedBulkOp();
     playerNames.forEach((playerName) => {
-      bulkInsert.insert({
+      Players.insert({
         ladderId: ladderId,
         name: playerName,
         score: 0,
@@ -97,7 +96,6 @@ Meteor.methods({
         queueTime: Date.now(),
       });
     });
-    bulkInsert.execute();
   },
 
   startLadder: function(ladderId) {

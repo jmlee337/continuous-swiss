@@ -186,7 +186,10 @@
         <h3>Players</h3>
         <table class="withButtons">
           {{#each players}}
-            <tr><td>{{name}}</td></tr>
+            <tr>
+              <td>{{name}}</td>
+              <td><button class="removePlayer" type="button" value="{{_id}}">x</button></td>
+            </tr>
           {{/each}}
         </table>
       </div>
