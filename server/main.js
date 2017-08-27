@@ -1,6 +1,8 @@
 import slug from 'slug';
 
+import {check} from 'meteor/check';
 import {HTTP} from 'meteor/http';
+import {Match} from 'meteor/check';
 import {Meteor} from 'meteor/meteor';
 
 import {Ladders} from '../lib/collections.js';
@@ -15,6 +17,8 @@ slug.defaults.mode ='rfc3986';
 
 Meteor.methods({
   createLadder: function(name) {
+    check(name, String);
+
     const ladderSlug = slug(name);
     if (Ladders.findOne({slug: ladderSlug})) {
       throw new Meteor.Error('BAD_REQUEST', 'name matches existing tournament');
@@ -24,6 +28,8 @@ Meteor.methods({
   },
 
   addSetup: function(ladderId) {
+    check(ladderId, String);
+
     const setups =
         Setups.find({ladderId: ladderId}, {sort: [['number', 'asc']]}).fetch();
     if (setups.length === 0) {
@@ -44,10 +50,16 @@ Meteor.methods({
   },
 
   removeSetup: function(ladderId, setupId) {
+    check(ladderId, String);
+    check(setupId, String);
+
     Setups.remove(setupId);
   },
 
   addPlayer: function(ladderId, playerName) {
+    check(ladderId, String);
+    check(playerName, String);
+
     let bonuses = 0;
     const firstPlace = Players.find({
       ladderId: ladderId, bonuses: 0,
@@ -73,10 +85,16 @@ Meteor.methods({
   },
 
   removePlayer: function(ladderId, playerId) {
+    check(ladderId, String);
+    check(playerId, String);
+
     Players.remove(playerId);
   },
 
   addFromSmashgg: function(ladderId, slug) {
+    check(ladderId, String);
+    check(slug, String);
+
     // TODO: something with this eventually I guess.
     const entities =
         HTTP.get(
@@ -119,16 +137,26 @@ Meteor.methods({
   },
 
   queuePlayer: function(ladderId, playerId) {
+    check(ladderId, String);
+    check(playerId, String);
+
     queuePlayerCommon(ladderId, playerId, true);
   },
 
   unqueueFromMatchmaking: function(ladderId, playerId) {
+    check(ladderId, String);
+    check(playerId, String);
+
     Players.update(
         playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
   },
 
   // quitterNumber: 1 or 2 (player 1/player 2)
   unqueueFromWaiting: function(ladderId, pairingId, quitterNumber) {
+    check(ladderId, String);
+    check(pairingId, String);
+    check(quitterNumber, Match.Integer);
+
     if (!(quitterNumber === 1 || quitterNumber === 2)) {
       throw new Meteor.Error('BAD_REQUEST', 'quitter number not 1 or 2');
     }
@@ -156,6 +184,10 @@ Meteor.methods({
 
   // winnerNumber: 1 or 2 (player 1/player 2)
   submitWinner: function(ladderId, pairingId, winnerNumber) {
+    check(ladderId, String);
+    check(pairingId, String);
+    check(winnerNumber, Match.Integer);
+
     if (!(winnerNumber === 1 || winnerNumber === 2)) {
       throw new Meteor.Error('BAD_REQUEST', 'winner number not 1 or 2');
     }
@@ -200,6 +232,9 @@ Meteor.methods({
   },
 
   fixMatch: function(ladderId, matchId) {
+    check(ladderId, String);
+    check(matchId, String);
+
     const match = Matches.findOne(matchId);
     if (!match) {
       throw new Meteor.Error('BAD_REQUEST', 'match not found');
