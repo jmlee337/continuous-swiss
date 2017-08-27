@@ -1,16 +1,17 @@
-import slug from 'slug';
-
-import {check} from 'meteor/check';
 import {HTTP} from 'meteor/http';
-import {Match} from 'meteor/check';
-import {Meteor} from 'meteor/meteor';
-
 import {Ladders} from '../lib/collections.js';
+import {Match} from 'meteor/check';
 import {Matches} from '../lib/collections.js';
+import {Meteor} from 'meteor/meteor';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
 import {Setups} from '../lib/collections.js';
+
+import {check} from 'meteor/check';
+import {getStandingsSelector} from '../lib/standings.js';
+import slug from 'slug';
+import {standingsSortFn} from '../lib/standings.js';
 
 slug.defaults.mode ='rfc3986';
 
@@ -297,6 +298,37 @@ Meteor.methods({
     }});
   },
 
+  cullPlayer: function(ladderId, playerId) {
+    check(ladderId, String);
+    check(playerId, String);
+
+    cullPlayer(playerId);
+  },
+
+  cullTopPlayers: function(ladderId, numPlayers) {
+    check(ladderId, String);
+    check(numPlayers, Match.Integer);
+
+    const players = Players.find(getStandingsSelector(ladderId)).fetch()
+        .sort(standingsSortFn);
+    for (let i = 0; i < Math.min(numPlayers, players.length); i++) {
+      cullPlayer(players[i]._id);
+    }
+  },
+
+  reinstatePlayer: function(ladderId, playerId) {
+    check(ladderId, String);
+    check(playerId, String);
+
+    const player = Players.find(playerId);
+    if (!player || player.queue !== Queue.FROZEN) {
+      throw new Meteor.Error('PRECONDITION_FAILED', 'player not frozen');
+    }
+
+    Players.update(
+      playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
+  },
+
   clearDb: function() {
     Ladders.remove({});
     Players.remove({});
@@ -471,4 +503,9 @@ function giveLoss(playerId, opponentId, bonus, matchId) {
     $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
     $addToSet: {playersPlayed: opponentId},
   });
+}
+
+function cullPlayer(playerId) {
+  Players.update(
+    playerId, {$set: {queue: Queue.FROZEN, queueTime: Date.now()}});
 }

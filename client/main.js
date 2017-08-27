@@ -1,13 +1,15 @@
 import {FlowRouter} from 'meteor/kadira:flow-router';
-import {ReactiveDict} from 'meteor/reactive-dict';
-import {Template} from 'meteor/templating';
-
 import {Ladders} from '../lib/collections.js';
 import {Matches} from '../lib/collections.js';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
+import {ReactiveDict} from 'meteor/reactive-dict';
 import {Setups} from '../lib/collections.js';
+import {Template} from 'meteor/templating';
+
+import {StandingsSelector} from '../lib/standings.js';
+import {standingsSortFn} from '../lib/standings.js';
 
 import './main.html';
 
@@ -111,13 +113,7 @@ Template.ladderPage.helpers({
   },
 
   'standings': function() {
-    return Players.find({games: {$gt: 0}}).fetch()
-        .sort((a, b) => {
-          if (a.score !== b.score) {
-            return b.score - a.score;
-          }
-          return b.wins / b.games - a.wins / a.games;
-        });
+    return Players.find(StandingsSelector).fetch().sort(standingsSortFn);
   },
 
   'setups': function() {
