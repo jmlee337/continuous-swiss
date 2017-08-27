@@ -23,8 +23,14 @@ Meteor.methods({
     if (Ladders.findOne({slug: ladderSlug})) {
       throw new Meteor.Error('BAD_REQUEST', 'name matches existing tournament');
     }
-    Ladders.insert({slug: ladderSlug, name: name});
+    Ladders.insert({slug: ladderSlug, name: name, started: false});
     return ladderSlug;
+  },
+
+  startLadder: function(ladderId) {
+    check(ladderId, String);
+
+    Ladders.update(ladderId, {$set: {started: true}});
   },
 
   addSetup: function(ladderId) {

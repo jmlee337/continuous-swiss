@@ -64,6 +64,14 @@ Template.ladderPage.helpers({
     return Template.instance().dict.get('name');
   },
 
+  'started': function() {
+    return Ladders.findOne(Template.instance().dict.get('id')).started;
+  },
+
+  'players': function() {
+    return Players.find();
+  },
+
   'unqueued': function() {
     return Players.find({queue: Queue.NONE}, {sort: [['queueTime', 'asc']]});
   },
@@ -135,6 +143,10 @@ Template.ladderPage.events({
   'click .removeSetup': function(event, templateInstance) {
     Meteor.call(
         'removeSetup', templateInstance.dict.get('id'), event.target.value);
+  },
+
+  'click .startLadder': function(event, templateInstance) {
+    Meteor.call('startLadder', templateInstance.dict.get('id'));
   },
 
   'click .queuePlayer': function(event, templateInstance) {
