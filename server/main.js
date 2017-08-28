@@ -305,6 +305,7 @@ Meteor.methods({
     cullPlayer(playerId);
   },
 
+  // TODO: use this method.
   cullTopPlayers: function(ladderId, numPlayers) {
     check(ladderId, String);
     check(numPlayers, Match.Integer);
@@ -320,7 +321,7 @@ Meteor.methods({
     check(ladderId, String);
     check(playerId, String);
 
-    const player = Players.find(playerId);
+    const player = Players.findOne(playerId);
     if (!player || player.queue !== Queue.FROZEN) {
       throw new Meteor.Error('PRECONDITION_FAILED', 'player not frozen');
     }

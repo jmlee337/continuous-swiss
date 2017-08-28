@@ -89,31 +89,24 @@ Template.ladderPage.helpers({
   },
 
   'matchmaking': function() {
-    return Players.find({
-      queue: Queue.MATCHMAKING,
-    }, {
-      sort: [['queueTime', 'asc']],
-    });
+    return Players.find(
+        {queue: Queue.MATCHMAKING}, {sort: [['queueTime', 'asc']]});
   },
 
   'waiting': function() {
-    return Pairings.find({
-      queue: Queue.WAITING,
-    }, {
-      sort: [['queueTime', 'asc']],
-    });
+    return Pairings.find(
+        {queue: Queue.WAITING}, {sort: [['queueTime', 'asc']]});
   },
 
   'playing': function() {
-    return Pairings.find({
-      queue: Queue.PLAYING,
-    }, {
-      sort: [['queueTime', 'asc']],
-    });
+    return Pairings.find(
+        {queue: Queue.PLAYING}, {sort: [['queueTime', 'asc']]});
   },
 
   'standings': function() {
-    return Players.find(StandingsSelector).fetch().sort(standingsSortFn);
+    return Players.find({queue: Queue.FROZEN}, {sort: [['queueTime', 'asc']]})
+        .fetch()
+        .concat(Players.find(StandingsSelector).fetch().sort(standingsSortFn));
   },
 
   'setups': function() {
@@ -126,6 +119,10 @@ Template.ladderPage.helpers({
 
   'hasBonuses': function(bonuses, games) {
     return bonuses > games;
+  },
+
+  'isFrozen': function(queue) {
+    return queue === Queue.FROZEN;
   },
 });
 
@@ -245,5 +242,15 @@ Template.ladderPage.events({
   'click .fixMatch': function(event, templateInstance) {
     Meteor.call(
         'fixMatch', templateInstance.dict.get('id'), event.target.value);
+  },
+
+  'click .freezePlayer': function(event, templateInstance) {
+    Meteor.call(
+        'cullPlayer', templateInstance.dict.get('id'), event.target.value);
+  },
+
+  'click .unfreezePlayer': function(event, templateInstance) {
+    Meteor.call(
+        'reinstatePlayer', templateInstance.dict.get('id'), event.target.value);
   },
 });

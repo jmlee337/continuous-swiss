@@ -139,14 +139,23 @@
       <div class="column">
         <h3>Standings</h3>
         <table class="withHeader">
-          <thead><tr><td>Name</td><td>Score</td><td>W</td><td>L</td></tr></thead>
+          <thead><tr><td>Name</td><td>Score</td><td>W</td><td>L</td><td>Promote</td></tr></thead>
           <tbody>
             {{#each standings}}
               <tr>
-                <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
+                <td>
+                  {{#if isFrozen queue}}>{{/if}}{{name}}{{#if hasBonuses bonuses games}}*{{/if}}
+                </td>
                 <td>{{score}}</td>
                 <td>{{wins}}</td>
                 <td>{{losses}}</td>
+                <td>
+                  {{#if isFrozen queue}}
+                    <button class="unfreezePlayer" type="button" value="{{_id}}">Unpromote</button>
+                  {{else}}
+                    <button class="freezePlayer" type="button" value="{{_id}}">Promote</button>
+                  {{/if}}
+                </td>
               </tr>
             {{/each}}
           </tbody>
