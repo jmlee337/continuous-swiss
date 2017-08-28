@@ -9,9 +9,7 @@ import {Queue} from '../lib/queue.js';
 import {Setups} from '../lib/collections.js';
 
 import {check} from 'meteor/check';
-import {getStandingsSelector} from '../lib/standings.js';
 import slug from 'slug';
-import {standingsSortFn} from '../lib/standings.js';
 
 slug.defaults.mode ='rfc3986';
 
@@ -303,18 +301,6 @@ Meteor.methods({
     check(playerId, String);
 
     cullPlayer(playerId);
-  },
-
-  // TODO: use this method.
-  cullTopPlayers: function(ladderId, numPlayers) {
-    check(ladderId, String);
-    check(numPlayers, Match.Integer);
-
-    const players = Players.find(getStandingsSelector(ladderId)).fetch()
-        .sort(standingsSortFn);
-    for (let i = 0; i < Math.min(numPlayers, players.length); i++) {
-      cullPlayer(players[i]._id);
-    }
   },
 
   reinstatePlayer: function(ladderId, playerId) {
