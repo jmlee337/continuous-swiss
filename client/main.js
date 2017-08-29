@@ -81,7 +81,7 @@ Template.ladderPage.helpers({
   },
 
   'players': function() {
-    return Players.find();
+    return Players.find({}, {sort: [['seed', 'desc']]});
   },
 
   'unqueued': function() {
@@ -189,6 +189,16 @@ Template.ladderPage.events({
       nextPoolIndex = 0;
     }
     templateInstance.dict.set('poolIndex', nextPoolIndex);
+  },
+
+  'click .incrementSeed': function(event, templateInstance) {
+    Meteor.call(
+      'incrementSeed', templateInstance.dict.get('id'), event.target.value, 1);
+  },
+
+  'click .decrementSeed': function(event, templateInstance) {
+    Meteor.call(
+      'incrementSeed', templateInstance.dict.get('id'), event.target.value, -1);
   },
 
   'click .startLadder': function(event, templateInstance) {

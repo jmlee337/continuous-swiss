@@ -98,6 +98,10 @@ Meteor.methods({
     });
   },
 
+  incrementSeed: function(ladderId, playerId, n) {
+    Players.update(playerId, {$inc: {seed: n}});
+  },
+
   startLadder: function(ladderId) {
     check(ladderId, String);
 
