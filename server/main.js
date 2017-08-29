@@ -89,6 +89,7 @@ Meteor.methods({
         wins: 0,
         losses: 0,
         games: 0,
+        seed: 0,
         playersPlayed: [],
         bonuses: 0,
         queue: Queue.NONE,
@@ -101,6 +102,13 @@ Meteor.methods({
     check(ladderId, String);
 
     Ladders.update(ladderId, {$set: {started: true}});
+    const players =
+        Players.find({ladderId: ladderId}, {sort: [['seed', 'desc']]}).fetch();
+    const ordering = createInitialPairings(players.length);
+    console.log(ordering);
+    for (let i = 0; i < players.length; i++) {
+      queuePlayerCommon(ladderId, players[ordering[i]]._id, false);
+    }
   },
 
   addSetup: function(ladderId) {
@@ -153,6 +161,7 @@ Meteor.methods({
       wins: 0,
       losses: 0,
       games: 0,
+      seed: 0,
       playersPlayed: [],
       bonuses: bonuses,
       queue: Queue.NONE,
@@ -324,6 +333,52 @@ Meteor.methods({
     Matches.remove({});
   },
 });
+
+function createInitialPairings(numPlayers) {
+  let nodes = [];
+  for(let i = 0; i < numPlayers; i++) {
+    nodes.push({value: i});
+  }
+  const trees = pair(nodes);
+  const order = [];
+  read(trees[0], order);
+  if (trees.length === 2) {
+    order.push(trees[1].value);
+  }
+  return order;
+}
+
+function pair(nodes) {
+  if (nodes.length === 1) {
+    return nodes;
+  }
+
+  const newNodes = [];
+  const stopIndex = Math.floor(nodes.length / 2);
+  const lastIndex = nodes.length - 1;
+  for(let i = 0; i < stopIndex; i++) {
+    newNodes.push({
+      value: nodes[i].value,
+      top: nodes[i],
+      bottom: nodes[lastIndex - i],
+    });
+  }
+
+  const recursiveNodes = pair(newNodes);
+  if (nodes.length % 2 === 1) {
+    recursiveNodes.push(nodes[stopIndex]);
+  }
+  return recursiveNodes;
+}
+
+function read(node, out) {
+  if (node.top) {
+    read(node.top, out);
+    read(node.bottom, out);
+  } else {
+    out.push(node.value);
+  }
+}
 
 function queuePlayerCommon(ladderId, playerId, setUnfixable) {
   const player = Players.findOne(playerId);
