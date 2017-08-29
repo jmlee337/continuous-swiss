@@ -353,7 +353,7 @@ function createInitialPairings(numPlayers) {
   const order = [];
   read(trees[0], order);
   if (trees.length === 2) {
-    order.push(trees[1].value);
+    read(trees[1], order);
   }
   return order;
 }
