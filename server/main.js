@@ -6,6 +6,7 @@ import {Meteor} from 'meteor/meteor';
 import {Pairings} from '../lib/collections.js';
 import {Players} from '../lib/collections.js';
 import {Queue} from '../lib/queue.js';
+import {Result} from '../lib/result.js';
 import {Setups} from '../lib/collections.js';
 
 import {check} from 'meteor/check';
@@ -90,7 +91,8 @@ Meteor.methods({
         losses: 0,
         games: 0,
         seed: 0,
-        playersPlayed: [],
+        results: [],
+        opponents: [],
         bonuses: 0,
         queue: Queue.NONE,
         queueTime: Date.now(),
@@ -109,7 +111,6 @@ Meteor.methods({
     const players =
         Players.find({ladderId: ladderId}, {sort: [['seed', 'desc']]}).fetch();
     const ordering = createInitialPairings(players.length);
-    console.log(ordering);
     for (let i = 0; i < players.length; i++) {
       queuePlayerCommon(ladderId, players[ordering[i]]._id, false);
     }
@@ -166,7 +167,8 @@ Meteor.methods({
       losses: 0,
       games: 0,
       seed: 0,
-      playersPlayed: [],
+      results: [],
+      opponents: [],
       bonuses: bonuses,
       queue: Queue.NONE,
       queueTime: Date.now(),
@@ -447,13 +449,11 @@ function queuePlayerCommon(ladderId, playerId, setUnfixable) {
 // Player
 function findMatchInMatchmaking(ladderId, queuingPlayer) {
   return Players.find({
-    ladderId: ladderId,
-    queue: Queue.MATCHMAKING,
-    score: queuingPlayer.score,
+    ladderId: ladderId, queue: Queue.MATCHMAKING, score: queuingPlayer.score,
   }, {
     sort: [['queueTime', 'asc']],
   }).fetch().filter((matchedPlayer) => {
-    return !queuingPlayer.playersPlayed.includes(matchedPlayer._id);
+    return !queuingPlayer.opponents.includes(matchedPlayer._id);
   })[0];
 }
 
@@ -467,7 +467,7 @@ function findMatchInWaiting(ladderId, queuingPlayer) {
   }, {
     sort: [['queueTime', 'asc']],
   }).fetch().filter((pairing) => {
-    return !queuingPlayer.playersPlayed.includes(pairing.player1Id);
+    return !queuingPlayer.opponents.includes(pairing.player1Id);
   })[0];
 }
 
@@ -539,7 +539,7 @@ function giveWin(playerId, opponentId, matchId) {
   Players.update(playerId, {
     $inc: {score: 1, wins: 1, games: 1},
     $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
-    $addToSet: {playersPlayed: opponentId},
+    $push: {results: Result.WIN, opponents: opponentId},
   });
 }
 
@@ -547,7 +547,7 @@ function giveLoss(playerId, opponentId, bonus, matchId) {
   Players.update(playerId, {
     $inc: {score: bonus ? -1 : 0, losses: 1, games: 1},
     $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
-    $addToSet: {playersPlayed: opponentId},
+    $push: {results: Result.LOSS, opponents: opponentId},
   });
 }
 
