@@ -101,6 +101,10 @@ Meteor.methods({
   },
 
   incrementSeed: function(ladderId, playerId, n) {
+    check(ladderId, String);
+    check(playerId, String);
+    check(n, Match.Integer);
+
     Players.update(playerId, {$inc: {seed: n}});
   },
 
@@ -342,7 +346,7 @@ Meteor.methods({
 
 function createInitialPairings(numPlayers) {
   let nodes = [];
-  for(let i = 0; i < numPlayers; i++) {
+  for (let i = 0; i < numPlayers; i++) {
     nodes.push({value: i});
   }
   const trees = pair(nodes);
@@ -362,7 +366,7 @@ function pair(nodes) {
   const newNodes = [];
   const stopIndex = Math.floor(nodes.length / 2);
   const lastIndex = nodes.length - 1;
-  for(let i = 0; i < stopIndex; i++) {
+  for (let i = 0; i < stopIndex; i++) {
     newNodes.push({
       value: nodes[i].value,
       top: nodes[i],
