@@ -1,11 +1,11 @@
 import {check} from 'meteor/check';
 import {Meteor} from 'meteor/meteor';
 
-import {Ladders} from '../lib/collections.js';
-import {Matches} from '../lib/collections.js';
-import {Pairings} from '../lib/collections.js';
-import {Players} from '../lib/collections.js';
-import {Setups} from '../lib/collections.js';
+import {Ladders} from '/lib/collections.js';
+import {Matches} from '/lib/collections.js';
+import {Pairings} from '/lib/collections.js';
+import {Players} from '/lib/collections.js';
+import {Setups} from '/lib/collections.js';
 
 Meteor.publish('ladders', () => {
   return Ladders.find();

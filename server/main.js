@@ -1,13 +1,13 @@
 import {HTTP} from 'meteor/http';
-import {Ladders} from '../lib/collections.js';
+import {Ladders} from '/lib/collections.js';
 import {Match} from 'meteor/check';
-import {Matches} from '../lib/collections.js';
+import {Matches} from '/lib/collections.js';
 import {Meteor} from 'meteor/meteor';
-import {Pairings} from '../lib/collections.js';
-import {Players} from '../lib/collections.js';
-import {Queue} from '../lib/queue.js';
-import {Result} from '../lib/result.js';
-import {Setups} from '../lib/collections.js';
+import {Pairings} from '/lib/collections.js';
+import {Players} from '/lib/collections.js';
+import {Queue} from '/lib/queue.js';
+import {Result} from '/lib/result.js';
+import {Setups} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
 import slug from 'slug';
@@ -459,10 +459,10 @@ function seedExcludes(ladderId, player1, player2) {
   if (segLength < 2) {
     return false;
   }
-  return getSegIndex(seed1, segLength) === getSegIndex(seed2, segLength);
+  return getSegIndexFn(seed1, segLength) === getSegIndexFn(seed2, segLength);
 }
 
-function getSegIndex(seed, segLength) {
+function getSegIndexFn(seed, segLength) {
   const index = Math.floor(seed / segLength);
   const remainder = seed % segLength;
   if (remainder < 1 && remainder > 0) {

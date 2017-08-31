@@ -1,15 +1,15 @@
 import {FlowRouter} from 'meteor/kadira:flow-router';
-import {Ladders} from '../lib/collections.js';
-import {Matches} from '../lib/collections.js';
-import {Pairings} from '../lib/collections.js';
-import {Players} from '../lib/collections.js';
-import {Queue} from '../lib/queue.js';
+import {Ladders} from '/lib/collections.js';
+import {Matches} from '/lib/collections.js';
+import {Pairings} from '/lib/collections.js';
+import {Players} from '/lib/collections.js';
+import {Queue} from '/lib/queue.js';
 import {ReactiveDict} from 'meteor/reactive-dict';
-import {Setups} from '../lib/collections.js';
+import {Setups} from '/lib/collections.js';
+import {StandingsSelector} from '/lib/standings.js';
 import {Template} from 'meteor/templating';
 
-import {StandingsSelector} from '../lib/standings.js';
-import {standingsSortFn} from '../lib/standings.js';
+import {standingsSortFn} from '/lib/standings.js';
 
 import './main.html';
 

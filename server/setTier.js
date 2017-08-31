@@ -1,5 +1,5 @@
 import {Meteor} from 'meteor/meteor';
-import {Players} from '../lib/collections.js';
+import {Players} from '/lib/collections.js';
 
 Meteor.methods({
   setTier: function(ladderId, playerId, n) {

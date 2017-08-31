@@ -1,6 +1,6 @@
-import {Ladders} from '../lib/collections.js';
+import {Ladders} from '/lib/collections.js';
 import {Meteor} from 'meteor/meteor';
-import {Players} from '../lib/collections.js';
+import {Players} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
 import {getOrderedSeededPlayerIds} from '/server/helpers/helpers.js';
