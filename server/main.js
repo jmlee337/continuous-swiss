@@ -86,11 +86,12 @@ Meteor.methods({
       Players.insert({
         ladderId: ladderId,
         name: playerName,
+        tier: 0,
+        seed: Number.MAX_SAFE_INTEGER,
         score: 0,
         wins: 0,
         losses: 0,
         games: 0,
-        seed: 0,
         results: [],
         opponents: [],
         bonuses: 0,
@@ -100,24 +101,22 @@ Meteor.methods({
     });
   },
 
-  incrementSeed: function(ladderId, playerId, n) {
-    check(ladderId, String);
-    check(playerId, String);
-    check(n, Match.Integer);
-
-    Players.update(playerId, {$inc: {seed: n}});
-  },
-
   startLadder: function(ladderId) {
     check(ladderId, String);
 
-    Ladders.update(ladderId, {$set: {started: true}});
-    const players =
-        Players.find({ladderId: ladderId}, {sort: [['seed', 'desc']]}).fetch();
-    const ordering = createInitialPairings(players.length);
-    for (let i = 0; i < players.length; i++) {
-      queuePlayerCommon(ladderId, players[ordering[i]]._id, false);
-    }
+    const playersCursor = Players.find(
+        {ladderId: ladderId}, {sort: [['seed', 'asc'], ['tier', 'desc']]});
+    playersCursor.forEach((player, i) => {
+      if (player.seed === Number.MAX_SAFE_INTEGER) {
+        Players.update(player._id, {$set: {seed: i}});
+      } else {
+        if (player.seed !== i) {
+          throw new Meteor.Error('INTERNAL', 'gap in seeds somehow');
+        }
+      }
+    });
+    Ladders.update(
+        ladderId, {$set: {started: true, numSeeds: playersCursor.count()}});
   },
 
   addSetup: function(ladderId) {
@@ -166,11 +165,12 @@ Meteor.methods({
     Players.insert({
       ladderId: ladderId,
       name: playerName,
+      tier: 0,
+      seed: Number.MAX_SAFE_INTEGER,
       score: bonuses,
       wins: 0,
       losses: 0,
       games: 0,
-      seed: 0,
       results: [],
       opponents: [],
       bonuses: bonuses,
@@ -344,52 +344,6 @@ Meteor.methods({
   },
 });
 
-function createInitialPairings(numPlayers) {
-  let nodes = [];
-  for (let i = 0; i < numPlayers; i++) {
-    nodes.push({value: i});
-  }
-  const trees = pair(nodes);
-  const order = [];
-  read(trees[0], order);
-  if (trees.length === 2) {
-    read(trees[1], order);
-  }
-  return order;
-}
-
-function pair(nodes) {
-  if (nodes.length === 1) {
-    return nodes;
-  }
-
-  const newNodes = [];
-  const stopIndex = Math.floor(nodes.length / 2);
-  const lastIndex = nodes.length - 1;
-  for (let i = 0; i < stopIndex; i++) {
-    newNodes.push({
-      value: nodes[i].value,
-      top: nodes[i],
-      bottom: nodes[lastIndex - i],
-    });
-  }
-
-  const recursiveNodes = pair(newNodes);
-  if (nodes.length % 2 === 1) {
-    recursiveNodes.push(nodes[stopIndex]);
-  }
-  return recursiveNodes;
-}
-
-function read(node, out) {
-  if (node.top) {
-    read(node.top, out);
-    read(node.bottom, out);
-  } else {
-    out.push(node.value);
-  }
-}
-
 function queuePlayerCommon(ladderId, playerId, setUnfixable) {
   const player = Players.findOne(playerId);
   if (!player) {
@@ -452,27 +406,69 @@ function queuePlayerCommon(ladderId, playerId, setUnfixable) {
 
 // Player
 function findMatchInMatchmaking(ladderId, queuingPlayer) {
-  return Players.find({
+  const players = Players.find({
     ladderId: ladderId, queue: Queue.MATCHMAKING, score: queuingPlayer.score,
   }, {
     sort: [['queueTime', 'asc']],
-  }).fetch().filter((matchedPlayer) => {
-    return !queuingPlayer.opponents.includes(matchedPlayer._id);
-  })[0];
+  }).fetch();
+
+  for (let i = 0; i < players.length; i++) {
+    const waitingPlayer = players[i];
+    if (canMatch(ladderId, queuingPlayer, waitingPlayer)) {
+      return waitingPlayer;
+    }
+  }
+  return undefined;
 }
 
 // Pairing._id
 function findMatchInWaiting(ladderId, queuingPlayer) {
-  return Pairings.find({
+  const pairings = Pairings.find({
     ladderId: ladderId,
     queue: Queue.WAITING,
     score: queuingPlayer.score,
     player2Id: {$exists: false},
   }, {
     sort: [['queueTime', 'asc']],
-  }).fetch().filter((pairing) => {
-    return !queuingPlayer.opponents.includes(pairing.player1Id);
-  })[0];
+  }).fetch();
+
+  for (let i = 0; i < pairings.length; i++) {
+    const pairing = pairings[i];
+    const waitingPlayer = Players.findOne(pairing.player1Id);
+    if (canMatch(ladderId, queuingPlayer, waitingPlayer)) {
+      return pairing._id;
+    }
+  }
+  return undefined;
+}
+
+function canMatch(ladderId, player1, player2) {
+  return !player1.opponents.includes(player2._id) &&
+    !seedExcludes(ladderId, player1, player2);
+}
+
+function seedExcludes(ladderId, player1, player2) {
+  const seed1 = player1.seed;
+  const seed2 = player2.seed;
+  if (seed1 === Number.MAX_SAFE_INTEGER || seed2 === Number.MAX_SAFE_INTEGER) {
+    return false;
+  }
+
+  const divisor = Math.pow(2, Math.min(player1.games, player2.games) + 1);
+  const segLength = Ladders.findOne(ladderId).numSeeds / divisor;
+  if (segLength < 2) {
+    return false;
+  }
+  return getSegIndex(seed1, segLength) === getSegIndex(seed2, segLength);
+}
+
+function getSegIndex(seed, segLength) {
+  const index = Math.floor(seed / segLength);
+  const remainder = seed % segLength;
+  if (remainder < 1 && remainder > 0) {
+    return index - 1;
+  }
+  return index;
 }
 
 function addPlayerToPairing(player, pairingId) {
