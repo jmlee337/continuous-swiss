@@ -247,33 +247,27 @@ Meteor.methods({
     }
 
     if (winnerNumber === 1) {
-      const matchId = Matches.insert({
-        ladderId: ladderId,
-        winnerId: pairing.player1Id,
-        winnerName: pairing.player1Name,
-        winnerBonus: pairing.player1Bonus,
-        loserId: pairing.player2Id,
-        loserName: pairing.player2Name,
-        loserBonus: pairing.player2Bonus,
-        time: Date.now(),
-      });
-      giveWin(pairing.player1Id, pairing.player2Id, matchId);
-      giveLoss(
-          pairing.player2Id, pairing.player1Id, pairing.player2Bonus, matchId);
+      giveWinAndLoss(
+          ladderId,
+          pairing.player1Id,
+          pairing.player1Name,
+          pairing.player1Bonus,
+          pairing.player1Seed,
+          pairing.player2Id,
+          pairing.player2Name,
+          pairing.player2Bonus,
+          pairing.player2Seed);
     } else {
-      const matchId = Matches.insert({
-        ladderId: ladderId,
-        winnerId: pairing.player2Id,
-        winnerName: pairing.player2Name,
-        winnerBonus: pairing.player2Bonus,
-        loserId: pairing.player1Id,
-        loserName: pairing.player1Name,
-        loserBonus: pairing.player1Bonus,
-        time: Date.now(),
-      });
-      giveLoss(
-          pairing.player1Id, pairing.player2Id, pairing.player1Bonus, matchId);
-      giveWin(pairing.player2Id, pairing.player1Id, matchId);
+      giveWinAndLoss(
+          ladderId,
+          pairing.player2Id,
+          pairing.player2Name,
+          pairing.player2Bonus,
+          pairing.player2Seed,
+          pairing.player1Id,
+          pairing.player1Name,
+          pairing.player1Bonus,
+          pairing.player1Seed);
     }
     Pairings.remove(pairingId);
     Setups.update(pairing.setupId, {$unset: {pairingId: ''}});
@@ -299,19 +293,28 @@ Meteor.methods({
       throw new Meteor.Error('PRECONDITION_FAILED', 'loser not unqueued');
     }
 
-    Players.update(
-        match.winnerId,
-        {$inc: {score: match.winnerBonus ? -2 : -1, wins: -1, losses: 1}});
-    Players.update(
-        match.loserId,
-        {$inc: {score: match.loserBonus ? 2 : 1, wins: 1, losses: -1}});
+    const winnerSeed = match.winnerSeed;
+    const loserSeed = match.loserSeed;
+    const canSwap =
+        winnerSeed !== Number.MAX_SAFE_INTEGER &&
+        loserSeed !== Number.MAX_SAFE_INTEGER;
+    Players.update(match.winnerId, {
+      $inc: {score: match.winnerBonus ? -2 : -1, wins: -1, losses: 1},
+      $set: {seed: canSwap ? Math.max(winnerSeed, loserSeed) : winnerSeed},
+    });
+    Players.update(match.loserId, {
+      $inc: {score: match.loserBonus ? 2 : 1, wins: 1, losses: -1},
+      $set: {seed: canSwap ? Math.min(winnerSeed, loserSeed) : loserSeed},
+    });
     Matches.update(matchId, {$set: {
       winnerId: match.loserId,
       winnerName: match.loserName,
       winnerBonus: match.loserBonus,
+      winnerSeed: match.loserSeed,
       loserId: match.winnerId,
       loserName: match.winnerName,
       loserBonus: match.winnerBonus,
+      loserSeed: match.winnerSeed,
     }});
   },
 
@@ -390,6 +393,7 @@ function queuePlayerCommon(ladderId, playerId, setUnfixable) {
           player1Id: player._id,
           player1Name: player.name,
           player1Bonus: player.bonuses > player.games,
+          player1Seed: player.seed,
           queue: Queue.WAITING,
           queueTime: Date.now(),
         });
@@ -472,11 +476,14 @@ function getSegIndexFn(seed, segLength) {
 }
 
 function addPlayerToPairing(player, pairingId) {
-  Pairings.update(pairingId, {$set: {
-    player2Id: player._id,
-    player2Name: player.name,
-    player2Bonus: player.bonuses > player.games,
-  }});
+  Pairings.update(pairingId, {
+    $set: {
+      player2Id: player._id,
+      player2Name: player.name,
+      player2Bonus: player.bonuses > player.games,
+      player2Seed: player.seed,
+    },
+  });
 }
 
 function addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer) {
@@ -488,9 +495,11 @@ function addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer) {
     player1Id: matchedPlayer._id,
     player1Name: matchedPlayer.name,
     player1Bonus: matchedPlayer.bonuses > matchedPlayer.games,
+    player1Seed: matchedPlayer.seed,
     player2Id: player._id,
     player2Name: player.name,
     player2Bonus: player.bonuses > player.games,
+    player2Seed: player.seed,
     queue: Queue.WAITING,
     queueTime: Date.now(),
   });
@@ -535,19 +544,49 @@ function tryPromoteWaitingPairing(ladderId) {
   }
 }
 
-function giveWin(playerId, opponentId, matchId) {
-  Players.update(playerId, {
-    $inc: {score: 1, wins: 1, games: 1},
-    $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
-    $push: {results: Result.WIN, opponents: opponentId},
+function giveWinAndLoss(
+    ladderId,
+    winnerId,
+    winnerName,
+    winnerBonus,
+    winnerSeed,
+    loserId,
+    loserName,
+    loserBonus,
+    loserSeed) {
+  const matchId = Matches.insert({
+    ladderId: ladderId,
+    winnerId: winnerId,
+    winnerName: winnerName,
+    winnerBonus: winnerBonus,
+    winnerSeed: winnerSeed,
+    loserId: loserId,
+    loserName: loserName,
+    loserBonus: loserBonus,
+    loserSeed: loserSeed,
+    time: Date.now(),
   });
-}
-
-function giveLoss(playerId, opponentId, bonus, matchId) {
-  Players.update(playerId, {
-    $inc: {score: bonus ? -1 : 0, losses: 1, games: 1},
-    $set: {lastMatchId: matchId, queue: Queue.NONE, queueTime: Date.now()},
-    $push: {results: Result.LOSS, opponents: opponentId},
+  const canSwap =
+      winnerSeed !== Number.MAX_SAFE_INTEGER &&
+      loserSeed !== Number.MAX_SAFE_INTEGER;
+  Players.update(loserId, {
+    $inc: {score: loserBonus ? -1 : 0, losses: 1, games: 1},
+    $set: {
+      seed: canSwap ? Math.max(winnerSeed, loserSeed) : loserSeed,
+      lastMatchId: matchId,
+      queue: Queue.NONE,
+      queueTime: Date.now(),
+    },
+    $push: {results: Result.LOSS, opponents: winnerId},
+  });
+  Players.update(winnerId, {
+    $inc: {score: 1, wins: 1, games: 1},
+    $set: {
+      seed: canSwap ? Math.min(winnerSeed, loserSeed) : winnerSeed,
+      lastMatchId: matchId,
+      queue: Queue.NONE,
+      queueTime: Date.now()},
+    $push: {results: Result.WIN, opponents: loserId},
   });
 }
 
