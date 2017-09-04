@@ -12,34 +12,7 @@ import {Template} from 'meteor/templating';
 
 import {standingsSortFn} from '/lib/standings.js';
 
-import './main.html';
-
-Template.laddersPage.onCreated(function() {
-  this.subscribe('ladders');
-});
-
-Template.laddersPage.helpers({
-  'ladders': function() {
-    return Ladders.find({});
-  },
-});
-
-Template.laddersPage.events({
-  'submit .createLadder': function(event) {
-    Meteor.call('createLadder', event.target.ladderName.value, (err, slug) => {
-      if (err) {
-
-      } else if (slug) {
-        FlowRouter.go('/ladder/' + slug);
-      }
-    });
-    return false;
-  },
-
-  'click .clearDb': function(event) {
-    Meteor.call('clearDb');
-  },
-});
+import './ladderPage.html';
 
 Template.ladderPage.onCreated(function() {
   this.dict = new ReactiveDict();
