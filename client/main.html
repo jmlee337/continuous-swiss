@@ -197,14 +197,14 @@
           {{#each players}}
             <tr>
               <td rowspan="2">{{name}}</td>
-              <td rowspan="2">{{seed}}</td>
-              <td><button class="incrementSeed" type="button" value="{{_id}}">&#x2191;</button></td>
+              <td rowspan="2">{{getSeed seed}}</td>
+              <td><button class="raiseSeed" type="button" value="{{_id}}">&#x2191;</button></td>
               <td rowspan="2">
                 <button class="removePlayer" type="button" value="{{_id}}">x</button>
               </td>
             </tr>
             <tr>
-              <td><button class="decrementSeed" type="button" value="{{_id}}">&#x2193;</button></td>
+              <td><button class="lowerSeed" type="button" value="{{_id}}">&#x2193;</button></td>
             </tr>
           {{/each}}
         </table>

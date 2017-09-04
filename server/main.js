@@ -7,6 +7,7 @@ import {Pairings} from '/lib/collections.js';
 import {Players} from '/lib/collections.js';
 import {Queue} from '/lib/queue.js';
 import {Result} from '/lib/result.js';
+import {SeedsOptions} from '/lib/seeds.js';
 import {Setups} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
@@ -123,8 +124,7 @@ Meteor.methods({
   startLadder: function(ladderId) {
     check(ladderId, String);
 
-    const playersCursor = Players.find(
-        {ladderId: ladderId}, {sort: [['seed', 'asc'], ['tier', 'desc']]});
+    const playersCursor = Players.find({ladderId: ladderId}, SeedsOptions);
     playersCursor.forEach((player, i) => {
       if (player.seed === Number.MAX_SAFE_INTEGER) {
         Players.update(player._id, {$set: {seed: i}});

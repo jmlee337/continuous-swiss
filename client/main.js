@@ -6,6 +6,7 @@ import {Players} from '/lib/collections.js';
 import {Queue} from '/lib/queue.js';
 import {ReactiveDict} from 'meteor/reactive-dict';
 import {Setups} from '/lib/collections.js';
+import {SeedsOptions} from '/lib/seeds.js';
 import {StandingsSelector} from '/lib/standings.js';
 import {Template} from 'meteor/templating';
 
@@ -81,7 +82,11 @@ Template.ladderPage.helpers({
   },
 
   'players': function() {
-    return Players.find({}, {sort: [['seed', 'desc']]});
+    return Players.find({}, SeedsOptions);
+  },
+
+  'getSeed': function(seed) {
+    return seed < Number.MAX_SAFE_INTEGER ? seed + 1 : undefined;
   },
 
   'unqueued': function() {
@@ -200,14 +205,14 @@ Template.ladderPage.events({
     templateInstance.dict.set('poolIndex', nextPoolIndex);
   },
 
-  'click .incrementSeed': function(event, templateInstance) {
+  'click .raiseSeed': function(event, templateInstance) {
     Meteor.call(
-      'incrementSeed', templateInstance.dict.get('id'), event.target.value, 1);
+        'raiseSeed', templateInstance.dict.get('id'), event.target.value);
   },
 
-  'click .decrementSeed': function(event, templateInstance) {
+  'click .lowerSeed': function(event, templateInstance) {
     Meteor.call(
-      'incrementSeed', templateInstance.dict.get('id'), event.target.value, -1);
+        'lowerSeed', templateInstance.dict.get('id'), event.target.value);
   },
 
   'click .startLadder': function(event, templateInstance) {
