@@ -41,7 +41,7 @@ Meteor.methods({
     try {
       tournamentRes = HTTP.get(tournamentUrl);
       if (!tournamentRes.data.entities) {
-        throw 'No entities';
+        throw new Error('No entities');
       }
     } catch (e) {
       if (e.response) {
