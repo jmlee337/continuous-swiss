@@ -172,28 +172,18 @@ Meteor.methods({
     check(ladderId, String);
     check(playerName, String);
 
-    let bonuses = 0;
-    const firstPlace = Players.find({
-      ladderId: ladderId, bonuses: 0,
-    }, {
-      sort: [['score', 'desc']],
-    }).fetch()[0];
-    if (firstPlace) {
-      bonuses = Math.floor(firstPlace.score / 2);
-    }
-
     Players.insert({
       ladderId: ladderId,
       name: playerName,
       tier: 0,
       seed: Number.MAX_SAFE_INTEGER,
-      score: bonuses,
+      score: 0,
       wins: 0,
       losses: 0,
       games: 0,
       results: [],
       opponents: [],
-      bonuses: bonuses,
+      bonuses: 0,
       queue: Queue.NONE,
       queueTime: Date.now(),
     });
@@ -371,6 +361,20 @@ function queuePlayerCommon(ladderId, playerId, setUnfixable) {
   const player = Players.findOne(playerId);
   if (!player) {
     throw new Meteor.Error('BAD_REQUEST', 'player not found');
+  }
+
+  if (player.games === 0) {
+    const firstPlace = Players.findOne(
+      {ladderId: ladderId, bonuses: 0, score: {$gt: 0}},
+      {sort: [['score', 'desc']]});
+    if (firstPlace) {
+      const bonuses = Math.floor(firstPlace.score / 2);
+      if (bonuses > 0) {
+        player.score = bonuses;
+        player.bonuses = bonuses;
+        Players.update(playerId, {$set: {score: bonuses, bonuses: bonuses}});
+      }
+    }
   }
 
   if (setUnfixable) {
