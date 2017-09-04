@@ -150,11 +150,20 @@ Template.ladderPage.events({
 
   'submit .importFromSmashgg': function(event, templateInstance) {
     Meteor.call('importFromSmashgg', event.target.slug.value, (err, res) => {
-      if (err) {
-
-      } else if (res) {
-        templateInstance.dict.set('smashggImport', res);
+      if (err || !res) {
+        if (err.error === 'NOT_FOUND') {
+          res = {
+            name: 'Slug: "' + event.target.slug.value + '" not found.',
+            pools: [],
+          };
+        } else {
+          res = {
+            name: err.reason + ': ' + err.details,
+            pools: [],
+          };
+        }
       }
+      templateInstance.dict.set('smashggImport', res);
     });
     return false;
   },

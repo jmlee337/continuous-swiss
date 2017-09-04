@@ -36,15 +36,34 @@ Meteor.methods({
     check(slug, String);
 
     const tournamentUrl = TOURNAMENT_BASE + slug + TOURNAMENT_QUERY;
-    const tournamentRes = HTTP.get(tournamentUrl);
-    if (!tournamentRes.data.entities.groups) {
-      return;
+    let tournamentRes;
+    try {
+      tournamentRes = HTTP.get(tournamentUrl);
+      if (!tournamentRes.data.entities) {
+        throw 'No entities';
+      }
+    } catch (e) {
+      if (e.response) {
+        if (e.response.statusCode === 404) {
+          throw new Meteor.Error('NOT_FOUND', 'tournament not found');
+        } else if (statusCode) {
+          throw new Meteor.Error(
+              'INTERNAL',
+              'unexpected status from smash.gg',
+              statusCode.toString());
+        }
+      }
+      throw new Meteor.Error('INTERNAL', 'unexpected error', e.toString());
     }
 
     const smashggImport = {
       name: tournamentRes.data.entities.tournament.name,
       pools: [],
     };
+
+    if (!tournamentRes.data.entities.groups) {
+      return smashggImport;
+    }
     tournamentRes.data.entities.groups.filter((group) => {
       return group.groupTypeId === 6;
     }).forEach((group) => {
