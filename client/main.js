@@ -96,7 +96,18 @@ Template.ladderPage.helpers({
   },
 
   'unqueued': function() {
-    return Players.find({queue: Queue.NONE}, {sort: [['queueTime', 'asc']]});
+    return Players.find({queue: Queue.NONE}).fetch().sort((a, b) => {
+      if ((a.games > 0 && b.games > 0) ||
+          (a.games === 0 && b.games === 0)) {
+        return a.queueTime - b.queueTime;
+      }
+      if (a.games === 0) {
+        return 1;
+      }
+      if (b.games === 0) {
+        return -1;
+      }
+    });
   },
 
   'matchmaking': function() {
