@@ -89,6 +89,12 @@ Template.ladderPage.helpers({
     return seed < Number.MAX_SAFE_INTEGER ? seed + 1 : undefined;
   },
 
+  'selected': function(thisTier, selectedTier) {
+    if (thisTier === selectedTier) {
+      return 'selected';
+    }
+  },
+
   'unqueued': function() {
     return Players.find({queue: Queue.NONE}, {sort: [['queueTime', 'asc']]});
   },
@@ -215,15 +221,15 @@ Template.ladderPage.events({
         'lowerSeed', templateInstance.dict.get('id'), event.target.value);
   },
 
-  'click .startLadder': function(event, templateInstance) {
-    Meteor.call('startLadder', templateInstance.dict.get('id'));
-  },
-
   'change .tier': function(event, templateInstance) {
     const value = event.target.value;
     const tier = value && parseInt(value) ? parseInt(value): 0;
     Meteor.call(
         'setTier', templateInstance.dict.get('id'), event.target.name, tier);
+  },
+
+  'click .startLadder': function(event, templateInstance) {
+    Meteor.call('startLadder', templateInstance.dict.get('id'));
   },
 
   'click .queuePlayer': function(event, templateInstance) {
