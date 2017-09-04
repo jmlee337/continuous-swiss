@@ -219,6 +219,13 @@ Template.ladderPage.events({
     Meteor.call('startLadder', templateInstance.dict.get('id'));
   },
 
+  'change .tier': function(event, templateInstance) {
+    const value = event.target.value;
+    const tier = value && parseInt(value) ? parseInt(value): 0;
+    Meteor.call(
+        'setTier', templateInstance.dict.get('id'), event.target.name, tier);
+  },
+
   'click .queuePlayer': function(event, templateInstance) {
     Meteor.call(
         'queuePlayer', templateInstance.dict.get('id'), event.target.value);

@@ -196,9 +196,25 @@
         <table class="withButtons">
           {{#each players}}
             <tr>
-              <td rowspan="2">{{name}}</td>
               <td rowspan="2">{{getSeed seed}}</td>
               <td><button class="raiseSeed" type="button" value="{{_id}}">&#x2191;</button></td>
+              <td rowspan="2">{{name}}</td>
+              <td rowspan="2">
+                Tier:
+                <select class="tier" name="{{_id}}">
+                  <option></option>
+                  <option>10</option>
+                  <option>9</option>
+                  <option>8</option>
+                  <option>7</option>
+                  <option>6</option>
+                  <option>5</option>
+                  <option>4</option>
+                  <option>3</option>
+                  <option>2</option>
+                  <option>1</option>
+                </select>
+              </td>
               <td rowspan="2">
                 <button class="removePlayer" type="button" value="{{_id}}">x</button>
               </td>
