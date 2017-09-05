@@ -8,6 +8,7 @@ import {ReactiveDict} from 'meteor/reactive-dict';
 import {Setups} from '/lib/collections.js';
 import {SeedsOptions} from '/lib/seeds.js';
 import {StandingsSelector} from '/lib/standings.js';
+import {TimeSync} from 'meteor/mizzao:timesync';
 import {Template} from 'meteor/templating';
 
 import {standingsSortFn} from '/lib/standings.js';
@@ -118,6 +119,10 @@ Template.ladderPage.helpers({
 
   'isFrozen': function(queue) {
     return queue === Queue.FROZEN;
+  },
+
+  'shouldHighlight': function(queueTime) {
+    return TimeSync.serverTime(undefined, 10000) - queueTime < 120000;
   },
 });
 

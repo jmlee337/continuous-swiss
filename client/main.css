@@ -9,6 +9,7 @@
 }
 
 table {
+  border-spacing: 0;
   width: 100%;
 }
 
@@ -31,4 +32,8 @@ button:disabled {
 .withHeader tr {
   height: 2em;
   border-bottom: 1px solid #A7A7A7;
+}
+
+.highlight {
+  background-color: yellow;
 }

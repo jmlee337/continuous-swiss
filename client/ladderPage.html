@@ -20,7 +20,7 @@
         <h3>Playing</h3>
         <table class="withButtons">
           {{#each playing}}
-            <tr>
+            <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
               <td rowspan="2">{{setupNumber}}</td>
               <td>
                 <label>
@@ -35,7 +35,7 @@
                 </form>
               </td>
             </tr>
-            <tr>
+            <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
               <td>
                 <label>
                   <input type="radio" form="playing{{_id}}" name="winner" value="player2">
@@ -50,7 +50,7 @@
         <h3>Waiting</h3>
         <table class="withButtons">
           {{#each waiting}}
-            <tr>
+            <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
               {{#if player1Id}}
                 <td>
                   <form class="unqueueWaiting" id="waiting{{player1Id}}">
@@ -65,7 +65,7 @@
                 <td>?</td>
               {{/if}}
             </tr>
-            <tr>
+            <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
               {{#if player2Id}}
                 <td>
                   <form class="unqueueWaiting" id="waiting{{player2Id}}">
