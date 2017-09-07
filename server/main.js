@@ -1,363 +1,13 @@
-import {HTTP} from 'meteor/http';
 import {Ladders} from '/lib/collections.js';
-import {Match} from 'meteor/check';
 import {Matches} from '/lib/collections.js';
 import {Meteor} from 'meteor/meteor';
 import {Pairings} from '/lib/collections.js';
 import {Players} from '/lib/collections.js';
 import {Queue} from '/lib/queue.js';
 import {Result} from '/lib/result.js';
-import {SeedsOptions} from '/lib/seeds.js';
 import {Setups} from '/lib/collections.js';
 
-import {check} from 'meteor/check';
-import slug from 'slug';
-
-slug.defaults.mode ='rfc3986';
-
-const URL_BASE = 'https://api.smash.gg/';
-const TOURNAMENT_BASE = URL_BASE + 'tournament/';
-const TOURNAMENT_QUERY = '?expand[]=groups&expand[]=phase&expand[]=event';
-const GROUP_BASE = URL_BASE + 'phase_group/';
-const GROUP_QUERY = '?expand[]=entrants';
-
-Meteor.methods({
-  createLadder: function(name) {
-    check(name, String);
-
-    const ladderSlug = slug(name);
-    if (Ladders.findOne({slug: ladderSlug})) {
-      throw new Meteor.Error('BAD_REQUEST', 'name matches existing tournament');
-    }
-    Ladders.insert({slug: ladderSlug, name: name, started: false});
-    return ladderSlug;
-  },
-
-  importFromSmashgg: function(slug) {
-    check(slug, String);
-
-    const tournamentUrl = TOURNAMENT_BASE + slug + TOURNAMENT_QUERY;
-    let tournamentRes;
-    try {
-      tournamentRes = HTTP.get(tournamentUrl);
-      if (!tournamentRes.data.entities) {
-        throw new Error('No entities');
-      }
-    } catch (e) {
-      if (e.response) {
-        if (e.response.statusCode === 404) {
-          throw new Meteor.Error('NOT_FOUND', 'tournament not found');
-        } else if (statusCode) {
-          throw new Meteor.Error(
-              'INTERNAL',
-              'unexpected status from smash.gg',
-              statusCode.toString());
-        }
-      }
-      throw new Meteor.Error('INTERNAL', 'unexpected error', e.toString());
-    }
-
-    const smashggImport = {
-      name: tournamentRes.data.entities.tournament.name,
-      pools: [],
-    };
-
-    if (!tournamentRes.data.entities.groups) {
-      return smashggImport;
-    }
-    tournamentRes.data.entities.groups.filter((group) => {
-      return group.groupTypeId === 6;
-    }).forEach((group) => {
-      const groupUrl = GROUP_BASE + group.id + GROUP_QUERY;
-      const entities = HTTP.get(groupUrl).data.entities;
-      if (!entities || !entities.entrants || entities.entrants.length === 0) {
-        return;
-      }
-
-      const phase = tournamentRes.data.entities.phase.filter((phase) => {
-        return phase.id === group.phaseId;
-      })[0];
-      const event = tournamentRes.data.entities.event.filter((event) => {
-        return event.id === phase.eventId;
-      })[0];
-      const entrantNames = entities.entrants.map((entrant) => {
-        return entrant.name;
-      });
-
-      smashggImport.pools.push({
-        event: event ? event.name : '',
-        phase: phase ? phase.name : '',
-        group: group.displayIdentifier,
-        entrants: entrantNames,
-      });
-    });
-
-    return smashggImport;
-  },
-
-  addAllPlayers: function(ladderId, playerNames) {
-    check(ladderId, String);
-    check(playerNames, [String]);
-
-    if (Ladders.findOne(ladderId).started) {
-      throw new Meteor.Error('PRECONDITION_FAILED', 'ladder already started');
-    }
-    playerNames.forEach((playerName) => {
-      Players.insert({
-        ladderId: ladderId,
-        name: playerName,
-        tier: 0,
-        seed: Number.MAX_SAFE_INTEGER,
-        score: 0,
-        wins: 0,
-        losses: 0,
-        games: 0,
-        results: [],
-        opponents: [],
-        bonuses: 0,
-        queue: Queue.NONE,
-        queueTime: Date.now(),
-      });
-    });
-  },
-
-  startLadder: function(ladderId) {
-    check(ladderId, String);
-
-    const playersCursor = Players.find({ladderId: ladderId}, SeedsOptions);
-    playersCursor.forEach((player, i) => {
-      if (player.seed === Number.MAX_SAFE_INTEGER) {
-        Players.update(player._id, {$set: {seed: i, queueTime: Date.now()}});
-      } else {
-        if (player.seed !== i) {
-          throw new Meteor.Error('INTERNAL', 'gap in seeds somehow');
-        }
-        Players.update(player._id, {$set: {queueTime: Date.now()}});
-      }
-    });
-    Ladders.update(
-        ladderId, {$set: {started: true, numSeeds: playersCursor.count()}});
-  },
-
-  addSetup: function(ladderId) {
-    check(ladderId, String);
-
-    const setups =
-        Setups.find({ladderId: ladderId}, {sort: [['number', 'asc']]}).fetch();
-    if (setups.length === 0) {
-      Setups.insert({ladderId: ladderId, number: 1});
-    } else if (setups[setups.length - 1].number === setups.length) {
-      // if there's no gap in numbering, add the new setup at the end.
-      Setups.insert({ladderId: ladderId, number: setups.length + 1});
-    } else {
-      // there's a gap somewhere, find it and fill it.
-      for (let i = 0; i < setups.length; i++) {
-        if (setups[i].number !== i + 1) {
-          Setups.insert({ladderId: ladderId, number: i + 1});
-          return;
-        }
-      }
-    }
-    tryPromoteWaitingPairing(ladderId);
-  },
-
-  removeSetup: function(ladderId, setupId) {
-    check(ladderId, String);
-    check(setupId, String);
-
-    Setups.remove(setupId);
-  },
-
-  addPlayer: function(ladderId, playerName) {
-    check(ladderId, String);
-    check(playerName, String);
-
-    Players.insert({
-      ladderId: ladderId,
-      name: playerName,
-      tier: 0,
-      seed: Number.MAX_SAFE_INTEGER,
-      score: 0,
-      wins: 0,
-      losses: 0,
-      games: 0,
-      results: [],
-      opponents: [],
-      bonuses: 0,
-      queue: Queue.NONE,
-      queueTime: Date.now(),
-    });
-  },
-
-  removePlayer: function(ladderId, playerId) {
-    check(ladderId, String);
-    check(playerId, String);
-
-    Players.remove(playerId);
-  },
-
-  queuePlayer: function(ladderId, playerId) {
-    check(ladderId, String);
-    check(playerId, String);
-
-    queuePlayerCommon(ladderId, playerId, true);
-  },
-
-  unqueueFromMatchmaking: function(ladderId, playerId) {
-    check(ladderId, String);
-    check(playerId, String);
-
-    Players.update(
-        playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-  },
-
-  // quitterNumber: 1 or 2 (player 1/player 2)
-  unqueueFromWaiting: function(ladderId, pairingId, quitterNumber) {
-    check(ladderId, String);
-    check(pairingId, String);
-    check(quitterNumber, Match.Integer);
-
-    if (!(quitterNumber === 1 || quitterNumber === 2)) {
-      throw new Meteor.Error('BAD_REQUEST', 'quitter number not 1 or 2');
-    }
-    const pairing = Pairings.findOne(pairingId);
-    if (!pairing) {
-      throw new Meteor.Error('BAD_REQUEST', 'pairing not found');
-    }
-
-    if (quitterNumber === 1) {
-      Players.update(
-          pairing.player1Id,
-          {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-      if (pairing.player2Id) {
-        queuePlayerCommon(ladderId, pairing.player2Id, false);
-      }
-      Pairings.remove(pairingId);
-    } else {
-      Players.update(
-          pairing.player2Id,
-          {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-      queuePlayerCommon(ladderId, pairing.player1Id, false);
-      Pairings.remove(pairingId);
-    }
-  },
-
-  // winnerNumber: 1 or 2 (player 1/player 2)
-  submitWinner: function(ladderId, pairingId, winnerNumber) {
-    check(ladderId, String);
-    check(pairingId, String);
-    check(winnerNumber, Match.Integer);
-
-    if (!(winnerNumber === 1 || winnerNumber === 2)) {
-      throw new Meteor.Error('BAD_REQUEST', 'winner number not 1 or 2');
-    }
-    const pairing = Pairings.findOne(pairingId);
-    if (!pairing) {
-      throw new Meteor.Error('BAD_REQUEST', 'pairing not found');
-    }
-
-    if (winnerNumber === 1) {
-      giveWinAndLoss(
-          ladderId,
-          pairing.player1Id,
-          pairing.player1Name,
-          pairing.player1Bonus,
-          pairing.player1Seed,
-          pairing.player2Id,
-          pairing.player2Name,
-          pairing.player2Bonus,
-          pairing.player2Seed);
-    } else {
-      giveWinAndLoss(
-          ladderId,
-          pairing.player2Id,
-          pairing.player2Name,
-          pairing.player2Bonus,
-          pairing.player2Seed,
-          pairing.player1Id,
-          pairing.player1Name,
-          pairing.player1Bonus,
-          pairing.player1Seed);
-    }
-    Pairings.remove(pairingId);
-    Setups.update(pairing.setupId, {$unset: {pairingId: ''}});
-
-    tryPromoteWaitingPairing(ladderId);
-  },
-
-  fixMatch: function(ladderId, matchId) {
-    check(ladderId, String);
-    check(matchId, String);
-
-    const match = Matches.findOne(matchId);
-    if (!match) {
-      throw new Meteor.Error('BAD_REQUEST', 'match not found');
-    }
-    if (match.unfixable) {
-      throw new Meteor.Error('PRECONDITION_FAILED', 'match is unfixable');
-    }
-    if (Players.findOne(match.winnerId).queue !== Queue.NONE) {
-      throw new Meteor.Error('PRECONDITION_FAILED', 'winner not unqueued');
-    }
-    if (Players.findOne(match.loserId).queue !== Queue.NONE) {
-      throw new Meteor.Error('PRECONDITION_FAILED', 'loser not unqueued');
-    }
-
-    const winnerSeed = match.winnerSeed;
-    const loserSeed = match.loserSeed;
-    const canSwap =
-        winnerSeed !== Number.MAX_SAFE_INTEGER &&
-        loserSeed !== Number.MAX_SAFE_INTEGER;
-    Players.update(match.winnerId, {
-      $inc: {score: match.winnerBonus ? -2 : -1, wins: -1, losses: 1},
-      $set: {seed: canSwap ? Math.max(winnerSeed, loserSeed) : winnerSeed},
-    });
-    Players.update(match.loserId, {
-      $inc: {score: match.loserBonus ? 2 : 1, wins: 1, losses: -1},
-      $set: {seed: canSwap ? Math.min(winnerSeed, loserSeed) : loserSeed},
-    });
-    Matches.update(matchId, {$set: {
-      winnerId: match.loserId,
-      winnerName: match.loserName,
-      winnerBonus: match.loserBonus,
-      winnerSeed: match.loserSeed,
-      loserId: match.winnerId,
-      loserName: match.winnerName,
-      loserBonus: match.winnerBonus,
-      loserSeed: match.winnerSeed,
-    }});
-  },
-
-  cullPlayer: function(ladderId, playerId) {
-    check(ladderId, String);
-    check(playerId, String);
-
-    cullPlayer(playerId);
-  },
-
-  reinstatePlayer: function(ladderId, playerId) {
-    check(ladderId, String);
-    check(playerId, String);
-
-    const player = Players.findOne(playerId);
-    if (!player || player.queue !== Queue.FROZEN) {
-      throw new Meteor.Error('PRECONDITION_FAILED', 'player not frozen');
-    }
-
-    Players.update(
-      playerId, {$set: {queue: Queue.NONE, queueTime: Date.now()}});
-  },
-
-  clearDb: function() {
-    Ladders.remove({});
-    Players.remove({});
-    Pairings.remove({});
-    Setups.remove({});
-    Matches.remove({});
-  },
-});
-
-function queuePlayerCommon(ladderId, playerId, setUnfixable) {
+export function queuePlayerCommon(ladderId, playerId, setUnfixable) {
   const player = Players.findOne(playerId);
   if (!player) {
     throw new Meteor.Error('BAD_REQUEST', 'player not found');
@@ -530,7 +180,7 @@ function addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer) {
 }
 
 // void
-function tryPromoteWaitingPairing(ladderId) {
+export function tryPromoteWaitingPairing(ladderId) {
   const setups = Setups.find({
     ladderId: ladderId, pairingId: {$exists: false},
   }, {
@@ -568,7 +218,7 @@ function tryPromoteWaitingPairing(ladderId) {
   }
 }
 
-function giveWinAndLoss(
+export function giveWinAndLoss(
     ladderId,
     winnerId,
     winnerName,
@@ -614,7 +264,12 @@ function giveWinAndLoss(
   });
 }
 
-function cullPlayer(playerId) {
-  Players.update(
-    playerId, {$set: {queue: Queue.FROZEN, queueTime: Date.now()}});
+export function getOrderedSeededPlayerIds(ladderId) {
+  return Players.find(
+      {ladderId: ladderId, seed: {$lt: Number.MAX_SAFE_INTEGER}},
+      {sort: [['seed', 'asc']]})
+      .fetch()
+      .map((player) => {
+        return player._id;
+      });
 }

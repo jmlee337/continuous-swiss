@@ -3,7 +3,7 @@ import {Meteor} from 'meteor/meteor';
 import {Players} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
-import {getOrderedSeededPlayerIds} from '/server/helpers/helpers.js';
+import {getOrderedSeededPlayerIds} from '/server/main.js';
 
 Meteor.methods({
   lowerSeed: function(ladderId, playerId) {
