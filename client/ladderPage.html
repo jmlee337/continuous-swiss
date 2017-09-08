@@ -140,13 +140,19 @@
       </div>
       <div class="column">
         <h3>Matches</h3>
+        <table>
+          {{#each percentiles}}
+            <tr><td>{{k}}</td><td>{{v}}</td></tr>
+          {{/each}}
+        </table>
         <table class="withHeader withButtons">
-          <thead><tr><td>Winner</td><td>Loser</td><td>Fix?</td></tr></thead>
+          <thead><tr><td>Winner</td><td>Loser</td><td>Time</td><td>Fix?</td></tr></thead>
           <tbody>
             {{#each matches}}
               <tr>
                 <td>{{winnerName}}{{#if winnerBonus}}*{{/if}}</td>
                 <td>{{loserName}}{{#if loserBonus}}*{{/if}}</td>
+                <td>{{durationString duration}}</td>
                 <td>
                   {{#if unfixable}}
                     <button type="button" disabled>&#x21c4;</button>

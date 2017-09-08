@@ -227,7 +227,9 @@ export function giveWinAndLoss(
     loserId,
     loserName,
     loserBonus,
-    loserSeed) {
+    loserSeed,
+    queueTime) {
+  const nowMs = Date.now();
   const matchId = Matches.insert({
     ladderId: ladderId,
     winnerId: winnerId,
@@ -238,7 +240,8 @@ export function giveWinAndLoss(
     loserName: loserName,
     loserBonus: loserBonus,
     loserSeed: loserSeed,
-    time: Date.now(),
+    time: nowMs,
+    duration: nowMs - queueTime,
   });
   const canSwap =
       winnerSeed !== Number.MAX_SAFE_INTEGER &&
@@ -249,7 +252,7 @@ export function giveWinAndLoss(
       seed: canSwap ? Math.max(winnerSeed, loserSeed) : loserSeed,
       lastMatchId: matchId,
       queue: Queue.NONE,
-      queueTime: Date.now(),
+      queueTime: nowMs,
     },
     $push: {results: Result.LOSS, opponents: winnerId},
   });
@@ -259,7 +262,8 @@ export function giveWinAndLoss(
       seed: canSwap ? Math.min(winnerSeed, loserSeed) : winnerSeed,
       lastMatchId: matchId,
       queue: Queue.NONE,
-      queueTime: Date.now()},
+      queueTime: nowMs,
+    },
     $push: {results: Result.WIN, opponents: loserId},
   });
 }

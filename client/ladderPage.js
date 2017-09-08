@@ -11,6 +11,7 @@ import {StandingsSelector} from '/lib/standings.js';
 import {TimeSync} from 'meteor/mizzao:timesync';
 import {Template} from 'meteor/templating';
 
+import format from 'date-fns/format';
 import {standingsSortFn} from '/lib/standings.js';
 
 import './ladderPage.html';
@@ -123,6 +124,40 @@ Template.ladderPage.helpers({
 
   'shouldHighlight': function(queueTime) {
     return TimeSync.serverTime(undefined, 10000) - queueTime < 120000;
+  },
+
+  'durationString': function(durationMs) {
+    return format(durationMs, 'm:ss');
+  },
+
+  'percentiles': function() {
+    const PERCENTILES = [10, 50, 90];
+    const durations = Matches.find({}, {sort: [['duration', 'asc']]})
+        .map((match) => {
+          return match.duration;
+        });
+    const length = durations.length;
+
+    const percentileFn = function(p) {
+      if (length === 0) return 0;
+      if (p <= 0) return durations[0];
+      if (p >= 100) return durations[length - 1];
+
+      const index = (length - 1) * p / 100;
+      const lower = Math.floor(index);
+      const upper = lower + 1;
+      const weight = index % 1;
+      if (upper >= length) {
+        return format(duration[lower], 'm:ss');
+      }
+      const ms = durations[lower] * (1 - weight) + durations[upper] * weight;
+      return format(ms, 'm:ss');
+    };
+
+    return PERCENTILES.map((p) => {
+      const kString = 'p' + p;
+      return {k: kString, v: percentileFn(p)};
+    });
   },
 });
 

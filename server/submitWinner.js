@@ -32,7 +32,8 @@ Meteor.methods({
           pairing.player2Id,
           pairing.player2Name,
           pairing.player2Bonus,
-          pairing.player2Seed);
+          pairing.player2Seed,
+          pairing.queueTime);
     } else {
       giveWinAndLoss(
           ladderId,
@@ -43,7 +44,8 @@ Meteor.methods({
           pairing.player1Id,
           pairing.player1Name,
           pairing.player1Bonus,
-          pairing.player1Seed);
+          pairing.player1Seed,
+          pairing.queueTime);
     }
     Pairings.remove(pairingId);
     Setups.update(pairing.setupId, {$unset: {pairingId: ''}});
