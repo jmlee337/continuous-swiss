@@ -13,11 +13,16 @@
       {{/each}}
     {{/if}}
   </div>
+  <div>
+    {{#each percentiles}}
+      {{k}}: {{v}}<br/>
+    {{/each}}
+  </div>
 
   {{#if started}}
     <div class="container">
       <div class="column">
-        <h3>Playing</h3>
+        <h2>Playing</h2>
         <table class="withButtons">
           {{#each playing}}
             <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
@@ -47,7 +52,7 @@
           {{/each}}
         </table>
 
-        <h3>Waiting</h3>
+        <h3>Next</h3>
         <table class="withButtons">
           {{#each waiting}}
             <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
@@ -95,8 +100,9 @@
             </tr>
           {{/each}}
         </table>
-
-        <h3>Unqueued</h3>
+      </div>
+      <div class="column">
+        <h2>Unqueued</h2>
         <table class="withButtons">
           {{#each unqueued}}
             <tr>
@@ -114,7 +120,7 @@
         </table>
       </div>
       <div class="column">
-        <h3>Standings</h3>
+        <h2>Standings</h2>
         <table class="withHeader">
           <thead><tr><td>Name</td><td>Score</td><td>W</td><td>L</td><td>Promote</td></tr></thead>
           <tbody>
@@ -139,12 +145,7 @@
         </table>
       </div>
       <div class="column">
-        <h3>Matches</h3>
-        <table>
-          {{#each percentiles}}
-            <tr><td>{{k}}</td><td>{{v}}</td></tr>
-          {{/each}}
-        </table>
+        <h2>Matches</h2>
         <table class="withHeader withButtons">
           <thead><tr><td>Winner</td><td>Loser</td><td>Time</td><td>Fix?</td></tr></thead>
           <tbody>

@@ -1,16 +1,28 @@
+div {
+  margin-bottom: 1em;
+}
+
 .container {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
 }
 
 .column {
-  margin-right: 8px;
-  min-width: 200px;
+  margin-right: 32px;
+  min-width: 256px;
 }
 
 table {
   border-spacing: 0;
   width: 100%;
+}
+
+td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 256px;
 }
 
 .withButtons tr {
