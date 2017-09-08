@@ -5,6 +5,7 @@ import {Pairings} from '/lib/collections.js';
 import {Players} from '/lib/collections.js';
 import {Queue} from '/lib/queue.js';
 import {ReactiveDict} from 'meteor/reactive-dict';
+import {Result} from '/lib/result.js';
 import {Setups} from '/lib/collections.js';
 import {SeedsOptions} from '/lib/seeds.js';
 import {StandingsSelector} from '/lib/standings.js';
@@ -158,6 +159,16 @@ Template.ladderPage.helpers({
       const kString = 'p' + p;
       return {k: kString, v: percentileFn(p)};
     });
+  },
+
+  'prettifyResults': function(results) {
+    return results.reduce((resultsStr, result) => {
+      if (result === Result.WIN) {
+        return resultsStr + 'W';
+      } else {
+        return resultsStr + 'L';
+      }
+    }, "");
   },
 });
 
