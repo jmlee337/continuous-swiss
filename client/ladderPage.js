@@ -164,7 +164,7 @@ Template.ladderPage.helpers({
       const upper = lower + 1;
       const weight = index % 1;
       if (upper >= length) {
-        return format(duration[lower], 'm:ss');
+        return format(durations[lower], 'm:ss');
       }
       const ms = durations[lower] * (1 - weight) + durations[upper] * weight;
       return format(ms, 'm:ss');
