@@ -170,6 +170,11 @@ Template.ladderPage.helpers({
       }
     }, "");
   },
+
+  'open': function() {
+    const ladder = Ladders.findOne(Template.instance().dict.get('id'));
+    return ladder ? !ladder.closed : false;
+  }
 });
 
 Template.ladderPage.events({
@@ -265,6 +270,14 @@ Template.ladderPage.events({
 
   'click .startLadder': function(event, templateInstance) {
     Meteor.call('startLadder', templateInstance.dict.get('id'));
+  },
+
+  'click .closeLadder': function(event, templateInstance) {
+    Meteor.call('setLadderClosed', templateInstance.dict.get('id'), true);
+  },
+
+  'click .openLadder': function(event, templateInstance) {
+    Meteor.call('setLadderClosed', templateInstance.dict.get('id'), false);
   },
 
   'click .queuePlayer': function(event, templateInstance) {

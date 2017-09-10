@@ -13,13 +13,21 @@
       {{/each}}
     {{/if}}
   </div>
-  <div>
-    {{#each percentiles}}
-      {{k}}: {{v}}<br/>
-    {{/each}}
-  </div>
 
   {{#if started}}
+    <div>
+      {{#each percentiles}}
+        {{k}}: {{v}}<br/>
+      {{/each}}
+    </div>
+    <div>
+      Ladder is
+      {{#if open}}
+        <button class="closeLadder" type="button">Open</button>
+      {{else}}
+        <button class="openLadder" type="button">Closed</button>
+      {{/if}}
+    </div>
     <div class="container">
       <div class="column">
         <h2>Playing</h2>
@@ -114,7 +122,13 @@
                   <button class="removePlayer" type="button" value="{{_id}}">x</button>
                 {{/if}}
               </td>
-              <td><button class="queuePlayer" type="button" value="{{_id}}">Queue</button></td>
+              <td>
+                {{#if open}}
+                  <button class="queuePlayer" type="button" value="{{_id}}">Queue</button>
+                {{else}}
+                  <button type="button" disabled>Queue</button>
+                {{/if}}
+              </td>
             </tr>
           {{/each}}
         </table>
