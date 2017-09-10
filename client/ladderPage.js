@@ -115,6 +115,16 @@ Template.ladderPage.helpers({
     return Matches.find({}, {sort: [['time', 'desc']]});
   },
 
+  'matchesObj': function() {
+    return JSON.stringify(Matches.find({}, {sort: [['time', 'asc']]}).fetch().map((match) => {
+      return {
+        winner: match.winnerName,
+        loser: match.loserName,
+        time: match.time,
+      };
+    }));
+  },
+
   'hasBonuses': function(bonuses, games) {
     return bonuses > games;
   },
