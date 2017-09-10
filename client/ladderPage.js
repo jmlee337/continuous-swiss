@@ -127,6 +127,10 @@ Template.ladderPage.helpers({
     return TimeSync.serverTime(undefined, 10000) - queueTime < 120000;
   },
 
+  'elapsedTimeString': function(queueTime) {
+    return format(TimeSync.serverTime(undefined, 1000) - queueTime, 'm:ss');
+  },
+
   'durationString': function(durationMs) {
     return format(durationMs, 'm:ss');
   },
