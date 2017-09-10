@@ -20,7 +20,7 @@ Meteor.methods({
       for (let i = 0; i < setups.length; i++) {
         if (setups[i].number !== i + 1) {
           Setups.insert({ladderId: ladderId, number: i + 1});
-          return;
+          break;
         }
       }
     }
