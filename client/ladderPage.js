@@ -12,7 +12,7 @@ import {StandingsSelector} from '/lib/standings.js';
 import {TimeSync} from 'meteor/mizzao:timesync';
 import {Template} from 'meteor/templating';
 
-import format from 'date-fns/format';
+import format from 'format-duration';
 import {standingsSortFn} from '/lib/standings.js';
 
 import './ladderPage.html';
@@ -140,11 +140,11 @@ Template.ladderPage.helpers({
   },
 
   'elapsedTimeString': function(queueTime) {
-    return format(TimeSync.serverTime(undefined, 1000) - queueTime, 'm:ss');
+    return format(TimeSync.serverTime(undefined, 1000) - queueTime);
   },
 
   'durationString': function(durationMs) {
-    return format(durationMs, 'm:ss');
+    return format(durationMs);
   },
 
   'percentiles': function() {
@@ -165,10 +165,10 @@ Template.ladderPage.helpers({
       const upper = lower + 1;
       const weight = index % 1;
       if (upper >= length) {
-        return format(durations[lower], 'm:ss');
+        return format(durations[lower]);
       }
       const ms = durations[lower] * (1 - weight) + durations[upper] * weight;
-      return format(ms, 'm:ss');
+      return format(ms);
     };
 
     return PERCENTILES.map((p) => {
