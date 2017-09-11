@@ -2,7 +2,7 @@ import {Match} from 'meteor/check';
 import {Meteor} from 'meteor/meteor';
 import {Pairings} from '/lib/collections.js';
 import {Queue} from '/lib/queue.js';
-import {Result} from '/lib/result.js';
+import {Setups} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
 import {giveWinAndLoss} from '/server/main.js';

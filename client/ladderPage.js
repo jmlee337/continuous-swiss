@@ -121,6 +121,7 @@ Template.ladderPage.helpers({
           return {
             winner: match.winnerName,
             loser: match.loserName,
+            forfeited: match.forfeited,
             time: match.time,
           };
         }));
@@ -332,6 +333,19 @@ Template.ladderPage.events({
     } else if (event.target.winner.value === 'player2') {
       Meteor.call(
           'submitWinner',
+          templateInstance.dict.get('id'),
+          event.target.pairingId.value,
+          2);
+    } else if (event.target.winner.value === 'player1Forfeit') {
+      Meteor.call(
+          'submitForfeit',
+          templateInstance.dict.get('id'),
+          event.target.pairingId.value,
+          1);
+
+    } else if (event.target.winner.value === 'player2Forfeit') {
+      Meteor.call(
+          'submitForfeit',
           templateInstance.dict.get('id'),
           event.target.pairingId.value,
           2);

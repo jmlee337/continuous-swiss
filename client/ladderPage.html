@@ -41,6 +41,12 @@
                   {{player1Name}}{{#if player1Bonus}}*{{/if}}
                 </label>
               </td>
+              <td>
+                <input type="radio" form="playing{{_id}}" name="winner" value="player1Forfeit">
+              </td>
+              <td rowspan="2">
+                DQ
+              </td>
               <td rowspan="2">
                 <form class="winPlayer" id="playing{{_id}}">
                   <input type="hidden" name="pairingId" value="{{_id}}">
@@ -55,6 +61,9 @@
                   <input type="radio" form="playing{{_id}}" name="winner" value="player2">
                   {{player2Name}}{{#if player2Bonus}}*{{/if}}
                 </label>
+              </td>
+              <td>
+                <input type="radio" form="playing{{_id}}" name="winner" value="player2Forfeit">
               </td>
             </tr>
             <tr></tr>
@@ -168,7 +177,7 @@
             {{#each matches}}
               <tr>
                 <td>{{winnerName}}{{#if winnerBonus}}*{{/if}}</td>
-                <td>{{loserName}}{{#if loserBonus}}*{{/if}}</td>
+                <td>{{loserName}}{{#if loserBonus}}*{{/if}}{{#if forfeited}} (DQ){{/if}}</td>
                 <td>{{durationString duration}}</td>
                 <td>
                   {{#if unfixable}}
