@@ -10,7 +10,7 @@ import {tryPromoteWaitingPairing} from '/server/main.js';
 
 Meteor.methods({
   // quitterNumber: 1 or 2 (player 1/player 2)
-  unqueueFromPlaying: function(ladderId, pairingId, quitterNumber) {
+  submitForfeit: function(ladderId, pairingId, quitterNumber) {
     check(ladderId, String);
     check(pairingId, String);
     check(quitterNumber, Match.Integer);
