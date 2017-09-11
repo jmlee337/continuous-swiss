@@ -353,6 +353,11 @@ Template.ladderPage.events({
     return false;
   },
 
+  'click .freezeMatch': function(event, templateInstance) {
+    Meteor.call(
+        'freezeMatch', templateInstance.dict.get('id'), event.target.value);
+  },
+
   'click .fixMatch': function(event, templateInstance) {
     Meteor.call(
         'fixMatch', templateInstance.dict.get('id'), event.target.value);

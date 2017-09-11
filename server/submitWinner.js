@@ -53,9 +53,11 @@ Meteor.methods({
           false, // forfeited
           pairing.queueTime);
     }
-    Pairings.remove(pairingId);
-    Setups.update(pairing.setupId, {$unset: {pairingId: ''}});
 
+    Pairings.remove(pairingId);
+    if (pairing.setupId) {
+      Setups.update(pairing.setupId, {$unset: {pairingId: ''}});
+    }
     tryPromoteWaitingPairing(ladderId);
   },
 });
