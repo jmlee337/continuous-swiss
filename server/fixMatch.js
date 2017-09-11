@@ -23,7 +23,7 @@ Meteor.methods({
       throw new Meteor.Error('PRECONDITION_FAILED', 'winner not unqueued');
     }
     if (winner.results.pop() !== Result.WIN) {
-      throw new Meteor.Error('INTERNAL', 'winner didnt log a win Result')
+      throw new Meteor.Error('INTERNAL', 'winner didnt log a win Result');
     }
     winner.results.push(Result.LOSS);
     const loser = Players.findOne(match.loserId);

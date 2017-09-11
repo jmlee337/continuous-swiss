@@ -184,13 +184,13 @@ Template.ladderPage.helpers({
       } else {
         return resultsStr + 'L';
       }
-    }, "");
+    }, '');
   },
 
   'open': function() {
     const ladder = Ladders.findOne(Template.instance().dict.get('id'));
     return ladder ? !ladder.closed : false;
-  }
+  },
 });
 
 Template.ladderPage.events({
@@ -342,7 +342,6 @@ Template.ladderPage.events({
           templateInstance.dict.get('id'),
           event.target.pairingId.value,
           1);
-
     } else if (event.target.winner.value === 'player2Forfeit') {
       Meteor.call(
           'submitForfeit',
