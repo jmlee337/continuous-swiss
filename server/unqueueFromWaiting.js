@@ -21,6 +21,9 @@ Meteor.methods({
     if (!pairing) {
       throw new Meteor.Error('BAD_REQUEST', 'pairing not found');
     }
+    if (pairing.queue !== Queue.WAITING) {
+      throw new Meteor.Error('BAD_REQUEST', 'pairing not in waiting Queue');
+    }
 
     if (quitterNumber === 1) {
       Players.update(

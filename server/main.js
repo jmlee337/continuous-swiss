@@ -228,6 +228,7 @@ export function giveWinAndLoss(
     loserName,
     loserBonus,
     loserSeed,
+    forfeited,
     queueTime) {
   const nowMs = Date.now();
   const matchId = Matches.insert({
@@ -240,6 +241,7 @@ export function giveWinAndLoss(
     loserName: loserName,
     loserBonus: loserBonus,
     loserSeed: loserSeed,
+    forfeited: true,
     time: nowMs,
     duration: nowMs - queueTime,
   });
