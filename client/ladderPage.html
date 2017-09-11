@@ -180,7 +180,7 @@
           <thead><tr><td>Winner</td><td>Loser</td><td>Time</td><td>Fix?</td></tr></thead>
           <tbody>
             {{#each matches}}
-              <tr>
+              <tr class="{{#if shouldHighlight time}}highlight{{/if}}">
                 <td>{{winnerName}}{{#if winnerBonus}}*{{/if}}</td>
                 <td>{{loserName}}{{#if loserBonus}}*{{/if}}{{#if forfeited}} (DQ){{/if}}</td>
                 <td>{{durationString duration}}</td>
