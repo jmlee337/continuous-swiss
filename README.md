@@ -4,9 +4,14 @@
 
 ### Development
 This project uses [Meteor](https://www.meteor.com/). You need to install it in order to do anything.
+```
+git clone https://github.com/jmlee337/continuous-swiss.git
+cd continuous-swiss
+meteor npm install
+```
 
 #### Running
-Build and run the app from repository root:
+Build and run the app:
 ```
 meteor
 ```
