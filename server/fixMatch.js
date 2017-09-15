@@ -19,7 +19,7 @@ Meteor.methods({
       throw new Meteor.Error('PRECONDITION_FAILED', 'match is unfixable');
     }
     const winner = Players.findOne(match.winnerId);
-    if (winner.queue !== Queue.NONE) {
+    if (winner.queue !== Queue.NONE && winner.queue !== Queue.FINISHED) {
       throw new Meteor.Error('PRECONDITION_FAILED', 'winner not unqueued');
     }
     if (winner.results.pop() !== Result.WIN) {
@@ -27,7 +27,7 @@ Meteor.methods({
     }
     winner.results.push(Result.LOSS);
     const loser = Players.findOne(match.loserId);
-    if (loser.queue !== Queue.NONE) {
+    if (loser.queue !== Queue.NONE && winner.queue !== Queue.FINISHED) {
       throw new Meteor.Error('PRECONDITION_FAILED', 'loser not unqueued');
     }
     if (loser.results.pop() !== Result.LOSS) {

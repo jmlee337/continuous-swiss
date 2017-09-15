@@ -253,7 +253,7 @@ export function giveWinAndLoss(
     $set: {
       seed: canSwap ? Math.max(winnerSeed, loserSeed) : loserSeed,
       lastMatchId: matchId,
-      queue: Queue.NONE,
+      queue: forfeited ? Queue.NONE : Queue.FINISHED,
       queueTime: nowMs,
     },
     $push: {results: Result.LOSS, opponents: winnerId},
@@ -263,7 +263,7 @@ export function giveWinAndLoss(
     $set: {
       seed: canSwap ? Math.min(winnerSeed, loserSeed) : winnerSeed,
       lastMatchId: matchId,
-      queue: Queue.NONE,
+      queue: Queue.FINISHED,
       queueTime: nowMs,
     },
     $push: {results: Result.WIN, opponents: loserId},
