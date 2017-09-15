@@ -209,7 +209,7 @@ Template.ladderPage.helpers({
         }, Number.MAX_SAFE_INTEGER);
 
     return Players.findOne(playerId).games <= minGames + 1;
-  }
+  },
 });
 
 Template.ladderPage.events({

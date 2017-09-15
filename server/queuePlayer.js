@@ -10,7 +10,7 @@ Meteor.methods({
     check(playerId, String);
 
     const ladder = Ladders.findOne(ladderId);
-    if(!ladder) {
+    if (!ladder) {
       throw new Meteor.Error('BAD_REQUEST', 'ladder does not exist');
     }
     if (ladder.closed) {
