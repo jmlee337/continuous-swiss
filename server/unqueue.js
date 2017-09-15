@@ -5,7 +5,7 @@ import {Queue} from '/lib/queue.js';
 import {check} from 'meteor/check';
 
 Meteor.methods({
-  unqueueFromMatchmaking: function(ladderId, playerId) {
+  unqueue: function(ladderId, playerId) {
     check(ladderId, String);
     check(playerId, String);
 
@@ -13,8 +13,8 @@ Meteor.methods({
     if (!player) {
       throw new Meteor.Error('BAD_REQUEST', 'player not found');
     }
-    if (player.queue !== Queue.MATCHMAKING) {
-      throw new Meteor.Error('BAD_REQUEST', 'player is not in matchmaking');
+    if (player.queue !== Queue.MATCHMAKING && player.queue != Queue.FINISHED) {
+      throw new Meteor.Error('BAD_REQUEST', 'player cannot be unqueued');
     }
 
     Players.update(

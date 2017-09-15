@@ -301,9 +301,9 @@ Template.ladderPage.events({
         'queuePlayer', templateInstance.dict.get('id'), event.target.value);
   },
 
-  'click .unqueueMatchmaking': function(event, templateInstance) {
+  'click .unqueue': function(event, templateInstance) {
     Meteor.call(
-        'unqueueFromMatchmaking',
+        'unqueue',
         templateInstance.dict.get('id'),
         event.target.value);
   },
