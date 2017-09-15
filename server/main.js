@@ -241,7 +241,7 @@ export function giveWinAndLoss(
     loserName: loserName,
     loserBonus: loserBonus,
     loserSeed: loserSeed,
-    forfeited: true,
+    forfeited: forfeited,
     time: nowMs,
     duration: nowMs - queueTime,
   });
