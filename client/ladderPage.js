@@ -205,7 +205,9 @@ Template.ladderPage.helpers({
     const minGames = Players.find({queue: {$ne: Queue.NONE}})
         .fetch()
         .reduce((min, player) => {
-          return Math.min(min, player.games);
+          const games = player.games;
+          return Math.min(
+              min, player.queue === Queue.FINISHED ? games - 1 : games);
         }, Number.MAX_SAFE_INTEGER);
 
     return Players.findOne(playerId).games <= minGames + 1;
