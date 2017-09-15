@@ -125,6 +125,24 @@
         </table>
       </div>
       <div class="column">
+        <h2>Finished</h2>
+        <table class="withButtons">
+          {{#each finished}}
+            <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
+              <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
+              <td>
+                <button class="unqueue" type="button" value="{{_id}}">Quit</button>
+              </td>
+              <td>
+                {{#if open}}
+                  <button class="queuePlayer" type="button" value="{{_id}}">Requeue</button>
+                {{else}}
+                  <button type="button" disabled>Requeue</button>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </table>
         <h2>Unqueued</h2>
         <table class="withButtons">
           {{#each unqueued}}

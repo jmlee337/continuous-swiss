@@ -71,6 +71,11 @@ Template.ladderPage.helpers({
     }
   },
 
+  'finished': function() {
+    return Players.find(
+        {queue: Queue.FINISHED}, {sort: [['queueTime', 'desc']]});
+  },
+
   'unqueued': function() {
     return Players.find({queue: Queue.NONE}).fetch().sort((a, b) => {
       if ((a.games > 0 && b.games > 0) ||
