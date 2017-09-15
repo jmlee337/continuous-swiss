@@ -196,6 +196,20 @@ Template.ladderPage.helpers({
     const ladder = Ladders.findOne(Template.instance().dict.get('id'));
     return ladder ? !ladder.closed : false;
   },
+
+  'canQueue': function(playerId) {
+    const ladder = Ladders.findOne(Template.instance().dict.get('id'));
+    if (ladder.closed) {
+      return false;
+    }
+    const minGames = Players.find({queue: {$ne: Queue.NONE}})
+        .fetch()
+        .reduce((min, player) => {
+          return Math.min(min, player.games);
+        }, Number.MAX_SAFE_INTEGER);
+
+    return Players.findOne(playerId).games <= minGames + 1;
+  }
 });
 
 Template.ladderPage.events({

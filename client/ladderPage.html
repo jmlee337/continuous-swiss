@@ -134,7 +134,7 @@
                 <button class="unqueue" type="button" value="{{_id}}">Quit</button>
               </td>
               <td>
-                {{#if open}}
+                {{#if canQueue _id}}
                   <button class="queuePlayer" type="button" value="{{_id}}">Requeue</button>
                 {{else}}
                   <button type="button" disabled>Requeue</button>
@@ -156,7 +156,7 @@
                 {{/if}}
               </td>
               <td>
-                {{#if open}}
+                {{#if canQueue _id}}
                   <button class="queuePlayer" type="button" value="{{_id}}">Queue</button>
                 {{else}}
                   <button type="button" disabled>Queue</button>

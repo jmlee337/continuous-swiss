@@ -25,6 +25,15 @@ export function queuePlayerCommon(ladderId, playerId, setUnfixable) {
         Players.update(playerId, {$set: {score: bonuses, bonuses: bonuses}});
       }
     }
+  } else {
+    const minGames = Players.find({queue: {$ne: Queue.NONE}})
+        .fetch()
+        .reduce((min, player) => {
+          return Math.min(min, player.games);
+        }, Number.MAX_SAFE_INTEGER);
+    if (player.games > minGames + 1) {
+      throw new Meteor.Error('PRECONDITION_FAILED', 'player is too far ahead');
+    }
   }
 
   if (setUnfixable) {
