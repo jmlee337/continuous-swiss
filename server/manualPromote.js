@@ -8,5 +8,5 @@ Meteor.methods({
     check(ladderId, String);
 
     tryPromote(ladderId);
-  }
+  },
 });
