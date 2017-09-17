@@ -5,7 +5,7 @@ import {Setups} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
 import {giveWinAndLoss} from '/server/main.js';
-import {tryPromoteWaitingPairing} from '/server/main.js';
+import {tryPromote} from '/server/main.js';
 
 Meteor.methods({
   // quitterNumber: 1 or 2 (player 1/player 2)
@@ -54,6 +54,6 @@ Meteor.methods({
     if (pairing.setupId) {
       Setups.update(pairing.setupId, {$unset: {pairingId: ''}});
     }
-    tryPromoteWaitingPairing(ladderId);
+    tryPromote(ladderId);
   },
 });

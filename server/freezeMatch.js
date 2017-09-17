@@ -3,7 +3,7 @@ import {Pairings} from '/lib/collections.js';
 import {Setups} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
-import {tryPromoteWaitingPairing} from '/server/main.js';
+import {tryPromote} from '/server/main.js';
 
 Meteor.methods({
   'freezeMatch': function(ladderId, pairingId) {
@@ -20,6 +20,6 @@ Meteor.methods({
 
     Pairings.update(pairingId, {$unset: {setupId: '', setupNumber: ''}});
     Setups.update(pairing.setupId, {$unset: {pairingId: ''}});
-    tryPromoteWaitingPairing(ladderId);
+    tryPromote(ladderId);
   },
 });

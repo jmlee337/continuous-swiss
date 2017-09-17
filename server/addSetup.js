@@ -2,7 +2,7 @@ import {Meteor} from 'meteor/meteor';
 import {Setups} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
-import {tryPromoteWaitingPairing} from '/server/main.js';
+import {tryPromote} from '/server/main.js';
 
 Meteor.methods({
   addSetup: function(ladderId) {
@@ -24,6 +24,6 @@ Meteor.methods({
         }
       }
     }
-    tryPromoteWaitingPairing(ladderId);
+    tryPromote(ladderId);
   },
 });

@@ -7,7 +7,7 @@ import {Result} from '/lib/result.js';
 import {Setups} from '/lib/collections.js';
 
 // void
-export function tryPromoteWaitingPairing(ladderId) {
+export function tryPromote(ladderId) {
   const setup =
       Setups.findOne(
           {ladderId: ladderId, pairingId: {$exists: false}},
@@ -76,7 +76,7 @@ export function tryPromoteWaitingPairing(ladderId) {
       });
       Setups.update(setup._id, {$set: {pairingId: pairingId}});
 
-      tryPromoteWaitingPairing(ladderId);
+      tryPromote(ladderId);
       return;
     }
   }
