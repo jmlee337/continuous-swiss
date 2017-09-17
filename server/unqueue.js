@@ -13,7 +13,9 @@ Meteor.methods({
     if (!player) {
       throw new Meteor.Error('BAD_REQUEST', 'player not found');
     }
-    if (player.queue !== Queue.MATCHMAKING && player.queue != Queue.FINISHED) {
+    if (player.queue !== Queue.MATCHMAKING &&
+        player.queue !== Queue.WAITING &&
+        player.queue !== Queue.FINISHED) {
       throw new Meteor.Error('BAD_REQUEST', 'player cannot be unqueued');
     }
 

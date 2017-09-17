@@ -1,134 +1,85 @@
 import {Ladders} from '/lib/collections.js';
 import {Matches} from '/lib/collections.js';
-import {Meteor} from 'meteor/meteor';
 import {Pairings} from '/lib/collections.js';
 import {Players} from '/lib/collections.js';
 import {Queue} from '/lib/queue.js';
 import {Result} from '/lib/result.js';
 import {Setups} from '/lib/collections.js';
 
-export function queuePlayerCommon(ladderId, playerId, setUnfixable) {
-  const player = Players.findOne(playerId);
-  if (!player) {
-    throw new Meteor.Error('BAD_REQUEST', 'player not found');
+// void
+export function tryPromoteWaitingPairing(ladderId) {
+  const setup =
+      Setups.findOne(
+          {ladderId: ladderId, pairingId: {$exists: false}},
+          {sort: [['number', 'asc']]});
+  if (!setup) {
+    return;
   }
 
-  if (player.games === 0) {
-    const firstPlace = Players.findOne(
-      {ladderId: ladderId, bonuses: 0, score: {$gt: 0}},
-      {sort: [['score', 'desc']]});
-    if (firstPlace) {
-      const bonuses = Math.floor(firstPlace.score / 2);
-      if (bonuses > 0) {
-        player.score = bonuses;
-        player.bonuses = bonuses;
-        Players.update(playerId, {$set: {score: bonuses, bonuses: bonuses}});
-      }
-    }
-  } else {
-    const minGames = Players.find({queue: {$ne: Queue.NONE}})
-        .fetch()
-        .reduce((min, player) => {
-          const games = player.games;
-          return Math.min(
-              min, player.queue === Queue.FINISHED ? games - 1 : games);
-        }, Number.MAX_SAFE_INTEGER);
-    if (player.games > minGames + 1) {
-      throw new Meteor.Error('PRECONDITION_FAILED', 'player is too far ahead');
-    }
-  }
-
-  if (setUnfixable) {
-    Matches.update(player.lastMatchId, {$set: {unfixable: true}});
-  }
-
-  let destinationQueue = Queue.MATCHMAKING;
-  if (player.games >= player.bonuses) {
-    // normal queue: go to matchmaking first, promote to waiting if match found.
-    const matchedPlayer = findMatchInMatchmaking(ladderId, player);
-    if (matchedPlayer) {
-      // match with matchmaking player if possible.
-      destinationQueue = Queue.WAITING;
-      addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer);
-    } else {
-      const pairingId = findMatchInWaiting(ladderId, player);
-      if (pairingId) {
-        // fall-forward: match with waiting unpaired player if possible.
-        destinationQueue = Queue.WAITING;
-        addPlayerToPairing(player, pairingId);
-      }
-      // insert as matchmaking player.
-    }
-  } else {
-    // priority queue: go to waiting immediately and find a match later.
-    const pairingId = findMatchInWaiting(ladderId, player);
-    if (pairingId) {
-      // match with waiting unpaired player if possible.
-      addPlayerToPairing(player, pairingId);
-    } else {
-      const matchedPlayer = findMatchInMatchmaking(ladderId, player);
-      if (matchedPlayer) {
-        // fall-back: match with matchmaking player if possible.
-        addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer);
-      } else {
-        // insert as waiting unpaired player.
-        Pairings.insert({
-          ladderId: ladderId,
-          score: player.score,
-          player1Id: player._id,
-          player1Name: player.name,
-          player1Bonus: player.bonuses > player.games,
-          player1Seed: player.seed,
-          queue: Queue.WAITING,
-          queueTime: Date.now(),
-        });
-      }
-    }
-    destinationQueue = Queue.WAITING;
-  }
-  Players.update(
-      player._id, {$set: {queue: destinationQueue, queueTime: Date.now()}});
-  if (destinationQueue === Queue.WAITING) {
-    tryPromoteWaitingPairing(ladderId);
-  }
-}
-
-// Player
-function findMatchInMatchmaking(ladderId, queuingPlayer) {
-  const players = Players.find({
-    ladderId: ladderId, queue: Queue.MATCHMAKING, score: queuingPlayer.score,
-  }, {
-    sort: [['queueTime', 'asc']],
-  }).fetch();
+  const players =
+      Players.find(
+          {ladderId: ladderId, queue: Queue.WAITING},
+          {sort: [['queueTime', 'asc']]})
+      .fetch()
+      .concat(
+          Players.find(
+              {ladderId: ladderId, queue: Queue.MATCHMAKING},
+              {sort: [['queueTime', 'asc']]})
+          .fetch());
 
   for (let i = 0; i < players.length; i++) {
-    const waitingPlayer = players[i];
-    if (canMatch(ladderId, queuingPlayer, waitingPlayer)) {
-      return waitingPlayer;
+    const player = players[i];
+    const match =
+        Players.find(
+            {
+              ladderId: ladderId,
+              queue: Queue.MATCHMAKING,
+              score: player.score,
+              _id: {$ne: player._id},
+            })
+        .fetch()
+        .filter((match) => {
+          return canMatch(ladderId, player, match);
+        }).sort((a, b) => {
+          if (player.queue === Queue.WAITING) {
+            return a.games - b.games;
+          } else {
+            const aGamesDiff = Math.abs(a.games - player.games);
+            const bGamesDiff = Math.abs(b.games - player.games);
+            if (aGamesDiff !== bGamesDiff) {
+              return aGamesDiff - bGamesDiff;
+            }
+          }
+          // TODO: maybe sort by closeness to desired seed before this.
+          return a.queueTime - b.queueTime;
+        })[0];
+    if (match) {
+      const now = Date.now();
+      Players.update(
+          player._id, {$set: {queue: Queue.PLAYING, queueTime: now}});
+      Players.update(match._id, {$set: {queue: Queue.PLAYING, queueTime: now}});
+      Matches.update(player.lastMatchId, {$set: {unfixable: true}});
+      Matches.update(match.lastMatchId, {$set: {unfixable: true}});
+      const pairingId = Pairings.insert({
+        ladderId: ladderId,
+        player1Id: player._id,
+        player1Name: player.name,
+        player1Bonus: player.bonuses > player.games,
+        player1Seed: player.seed,
+        player2Id: match._id,
+        player2Name: match.name,
+        player2Bonus: match.bonuses > match.games,
+        player2Seed: match.seed,
+        queueTime: now,
+        setupId: setup._id,
+        setupNumber: setup.number,
+      });
+      Setups.update(setup._id, {$set: {pairingId: pairingId}});
+
+      tryPromoteWaitingPairing(ladderId);
+      return;
     }
   }
-  return undefined;
-}
-
-// Pairing._id
-function findMatchInWaiting(ladderId, queuingPlayer) {
-  const pairings = Pairings.find({
-    ladderId: ladderId,
-    queue: Queue.WAITING,
-    score: queuingPlayer.score,
-    player2Id: {$exists: false},
-  }, {
-    sort: [['queueTime', 'asc']],
-  }).fetch();
-
-  for (let i = 0; i < pairings.length; i++) {
-    const pairing = pairings[i];
-    const waitingPlayer = Players.findOne(pairing.player1Id);
-    if (canMatch(ladderId, queuingPlayer, waitingPlayer)) {
-      return pairing._id;
-    }
-  }
-  return undefined;
 }
 
 function canMatch(ladderId, player1, player2) {
@@ -154,79 +105,11 @@ function seedExcludes(ladderId, player1, player2) {
 function getSegIndexFn(seed, segLength) {
   const index = Math.floor(seed / segLength);
   const remainder = seed % segLength;
-  if (remainder < 1 && remainder > 0) {
-    return index - 1;
+  if (segLength - remainder < 1) {
+    // seed sits on a segment partition, so it's not a part of any segment
+    return undefined;
   }
   return index;
-}
-
-function addPlayerToPairing(player, pairingId) {
-  Pairings.update(pairingId, {
-    $set: {
-      player2Id: player._id,
-      player2Name: player.name,
-      player2Bonus: player.bonuses > player.games,
-      player2Seed: player.seed,
-    },
-  });
-}
-
-function addNewPairingWithMatchedPlayer(ladderId, player, matchedPlayer) {
-  Players.update(
-      matchedPlayer._id, {$set: {queue: Queue.WAITING, queueTime: Date.now()}});
-  Pairings.insert({
-    ladderId: ladderId,
-    score: matchedPlayer.score,
-    player1Id: matchedPlayer._id,
-    player1Name: matchedPlayer.name,
-    player1Bonus: matchedPlayer.bonuses > matchedPlayer.games,
-    player1Seed: matchedPlayer.seed,
-    player2Id: player._id,
-    player2Name: player.name,
-    player2Bonus: player.bonuses > player.games,
-    player2Seed: player.seed,
-    queue: Queue.WAITING,
-    queueTime: Date.now(),
-  });
-}
-
-// void
-export function tryPromoteWaitingPairing(ladderId) {
-  const setups = Setups.find({
-    ladderId: ladderId, pairingId: {$exists: false},
-  }, {
-    sort: [['number', 'asc']],
-  }).fetch();
-  const pairings = Pairings.find({
-    ladderId: ladderId,
-    queue: Queue.WAITING,
-    player1Id: {$exists: true},
-    player2Id: {$exists: true},
-  }, {
-    sort: [['queueTime', 'asc']],
-  }).fetch();
-  const length = Math.min(setups.length, pairings.length);
-
-  for (let i = 0; i < length; i++) {
-    const setup = setups[i];
-    const pairing = pairings[i];
-
-    Players.update(
-        pairing.player1Id,
-        {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
-    Players.update(
-        pairing.player2Id,
-        {$set: {queue: Queue.PLAYING, queueTime: Date.now()}});
-    Pairings.update(
-        pairing._id,
-        {$set: {
-          queue: Queue.PLAYING,
-          queueTime: Date.now(),
-          setupId: setup._id,
-          setupNumber: setup.number,
-        }});
-    Setups.update(setup._id, {$set: {pairingId: pairing._id}});
-  }
 }
 
 export function giveWinAndLoss(

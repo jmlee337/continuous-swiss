@@ -75,39 +75,16 @@
           {{/each}}
         </table>
 
-        <h3>Next</h3>
+        <h3>Priority</h3>
         <table class="withButtons">
           {{#each waiting}}
-            <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
-              {{#if player1Id}}
-                <td>
-                  <form class="unqueueWaiting" id="waiting{{player1Id}}">
-                    <input type="hidden" name="pairingId" value="{{_id}}">
-                    <input type="hidden" name="quitter" value="player1">
-                    {{player1Name}}{{#if player1Bonus}}*{{/if}}
-                  </form>
-                </td>
-                <td rowspan="2">{{score}}</td>
-                <td><button type="submit" form="waiting{{player1Id}}">Unqueue</button></td>
-              {{else}}
-                <td>?</td>
-              {{/if}}
+            <tr>
+              <td>{{name}}*</td>
+              <td>{{score}}</td>
+              <td>
+                <button class="unqueue" type="button" value="{{_id}}">Unqueue</button>
+              </td>
             </tr>
-            <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
-              {{#if player2Id}}
-                <td>
-                  <form class="unqueueWaiting" id="waiting{{player2Id}}">
-                    <input type="hidden" name="pairingId" value="{{_id}}">
-                    <input type="hidden" name="quitter" value="player2">
-                    {{player2Name}}{{#if player2Bonus}}*{{/if}}
-                  </form>
-                </td>
-                <td><button type="submit" form="waiting{{player2Id}}">Unqueue</button></td>
-              {{else}}
-                <td>?</td>
-              {{/if}}
-            </tr>
-            <tr></tr>
           {{/each}}
         </table>
 
@@ -115,7 +92,7 @@
         <table class="withButtons">
           {{#each matchmaking}}
             <tr>
-              <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
+              <td>{{name}}</td>
               <td>{{score}}</td>
               <td>
                 <button class="unqueue" type="button" value="{{_id}}">Unqueue</button>

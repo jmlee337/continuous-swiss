@@ -1,6 +1,5 @@
 import {Meteor} from 'meteor/meteor';
 import {Pairings} from '/lib/collections.js';
-import {Queue} from '/lib/queue.js';
 import {Setups} from '/lib/collections.js';
 
 import {check} from 'meteor/check';
@@ -14,9 +13,6 @@ Meteor.methods({
     const pairing = Pairings.findOne(pairingId);
     if (!pairing) {
       throw new Meteor.Error('BAD_REQUEST', 'pairing not found');
-    }
-    if (pairing.queue !== Queue.PLAYING) {
-      throw new Meteor.Error('BAD_REQUEST', 'pairing is not in playing Queue');
     }
     if (!pairing.setupId || !pairing.setupNumber) {
       throw new Meteor.Error('PRECONDITION_FAILED', 'pairing is frozen');

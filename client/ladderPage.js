@@ -97,13 +97,11 @@ Template.ladderPage.helpers({
   },
 
   'waiting': function() {
-    return Pairings.find(
-        {queue: Queue.WAITING}, {sort: [['queueTime', 'asc']]});
+    return Players.find({queue: Queue.WAITING}, {sort: [['queueTime', 'asc']]});
   },
 
   'playing': function() {
-    return Pairings.find(
-        {queue: Queue.PLAYING}, {sort: [['queueTime', 'asc']]});
+    return Pairings.find({}, {sort: [['queueTime', 'asc']]});
   },
 
   'standings': function() {
@@ -327,21 +325,6 @@ Template.ladderPage.events({
         'unqueue',
         templateInstance.dict.get('id'),
         event.target.value);
-  },
-
-  'submit .unqueueWaiting': function(event, templateInstance) {
-    if (event.target.quitter.value === 'player1') {
-      Meteor.call(
-          'unqueueFromWaiting',
-          templateInstance.dict.get('id'),
-          event.target.pairingId.value, 1);
-    } else if (event.target.quitter.value === 'player2') {
-      Meteor.call(
-          'unqueueFromWaiting',
-          templateInstance.dict.get('id'),
-          event.target.pairingId.value, 2);
-    }
-    return false;
   },
 
   'submit .winPlayer': function(event, templateInstance) {
