@@ -40,7 +40,7 @@ Meteor.methods({
       const minGames = Players.find({ladderId: ladderId, queue: {$ne: Queue.NONE}})
           .fetch()
           .reduce((min, rPlayer) => {
-            const games = rPlayer.games;
+            const games = rPlayer.games + rPlayer.bonuses;
             return Math.min(
                 min, rPlayer.queue === Queue.FINISHED ? games - 1 : games);
           }, Number.MAX_SAFE_INTEGER);
