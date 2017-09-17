@@ -4,15 +4,6 @@
     <input type="text" name="playerName" placeholder="New player name">
   </form>
   <br/>
-  <div>
-    <button class="addSetup" type="button">Add Setup</button>
-    {{#if setups.count}}
-      Remove:
-      {{#each setups}}
-        <button class="removeSetup" type="button" value="{{_id}}">{{number}}</button>
-      {{/each}}
-    {{/if}}
-  </div>
 
   {{#if started}}
     <div>
@@ -21,12 +12,22 @@
       {{/each}}
     </div>
     <div>
+      <button class="addSetup" type="button">Add Setup</button>
+      {{#if setups.count}}
+        Remove:
+        {{#each setups}}
+          <button class="removeSetup" type="button" value="{{_id}}">{{number}}</button>
+        {{/each}}
+      {{/if}}
+    </div>
+    <div>
       Ladder is
       {{#if open}}
         <button class="closeLadder" type="button">Open</button>
       {{else}}
         <button class="openLadder" type="button">Closed</button>
       {{/if}}
+      <button class="manualPromote" type="button">Load Matches</button>
     </div>
     <div class="container">
       <div class="column">

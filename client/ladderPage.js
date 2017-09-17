@@ -315,6 +315,10 @@ Template.ladderPage.events({
     Meteor.call('setLadderClosed', templateInstance.dict.get('id'), false);
   },
 
+  'click .manualPromote': function(event, templateInstance) {
+    Meteor.call('manualPromote', templateInstance.dict.get('id'));
+  },
+
   'click .queuePlayer': function(event, templateInstance) {
     Meteor.call(
         'queuePlayer', templateInstance.dict.get('id'), event.target.value);
