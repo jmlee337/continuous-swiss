@@ -4,7 +4,11 @@
   </form>
   <br/>
   {{#each ladders}}
-    <div><a href="ladder/{{slug}}/admin">{{name}}</a></div>
+    <div>
+      {{name}}
+      <a href="ladder/{{slug}}/reporting">reporting</a>
+      <a href="ladder/{{slug}}/admin">admin</a>
+    </div>
   {{/each}}
   <br/>
   <button class="clearDb" type="button">Clear DB</button>

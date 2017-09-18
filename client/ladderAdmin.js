@@ -31,7 +31,6 @@ Template.ladderAdmin.onCreated(function() {
     handles.push(this.subscribe('ladder', FlowRouter.getParam('slug'), () => {
       const ladder = Ladders.findOne();
       this.dict.set('name', ladder.name);
-      this.dict.set('id', ladder._id);
 
       handles.push(this.subscribe('players', ladder._id));
       handles.push(this.subscribe('pairings', ladder._id));
