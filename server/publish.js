@@ -11,6 +11,12 @@ Meteor.publish('ladders', () => {
   return Ladders.find();
 });
 
+Meteor.publish('ladder', (slug) => {
+  check(slug, String);
+
+  return Ladders.find({slug: slug});
+});
+
 Meteor.publish('matches', (ladderId) => {
   check(ladderId, String);
 

@@ -20,22 +20,24 @@ import './ladderPage.html';
 Template.ladderPage.onCreated(function() {
   this.dict = new ReactiveDict();
   this.dict.set('poolIndex', 0);
-  const handle = this.subscribe('ladders');
-  this.slug = () => FlowRouter.getParam('slug');
+  let handles = [];
 
   this.autorun(() => {
-    if (handle.ready()) {
-      const ladder = Ladders.findOne({slug: this.slug()});
-      if (ladder) {
-        this.dict.set('name', ladder.name);
-        this.dict.set('id', ladder._id);
+    handles.forEach((handle) => {
+      handle.stop();
+    })
+    handles = [];
 
-        this.subscribe('players', ladder._id);
-        this.subscribe('pairings', ladder._id);
-        this.subscribe('setups', ladder._id);
-        this.subscribe('matches', ladder._id);
-      }
-    }
+    handles.push(this.subscribe('ladder', FlowRouter.getParam('slug'), () => {
+      const ladder = Ladders.findOne();
+      this.dict.set('name', ladder.name);
+      this.dict.set('id', ladder._id);
+
+      handles.push(this.subscribe('players', ladder._id));
+      handles.push(this.subscribe('pairings', ladder._id));
+      handles.push(this.subscribe('setups', ladder._id));
+      handles.push(this.subscribe('matches', ladder._id));
+    }));
   });
 });
 
@@ -45,8 +47,8 @@ Template.ladderPage.helpers({
   },
 
   'started': function() {
-    const ladder = Ladders.findOne(Template.instance().dict.get('id'));
-    return ladder ? ladder.started : false;
+    const ladder = Ladders.findOne();
+    return ladder ? Ladders.findOne().started : false;
   },
 
   'smashggImport': function() {
@@ -191,13 +193,11 @@ Template.ladderPage.helpers({
   },
 
   'open': function() {
-    const ladder = Ladders.findOne(Template.instance().dict.get('id'));
-    return ladder ? !ladder.closed : false;
+    return !Ladders.findOne().closed;
   },
 
   'canQueue': function(playerId) {
-    const ladder = Ladders.findOne(Template.instance().dict.get('id'));
-    if (ladder.closed) {
+    if (Ladders.findOne().closed) {
       return false;
     }
     const minGames = Players.find({queue: {$ne: Queue.NONE}})
@@ -213,25 +213,23 @@ Template.ladderPage.helpers({
 });
 
 Template.ladderPage.events({
-  'submit .addPlayer': function(event, templateInstance) {
+  'submit .addPlayer': function(event) {
     const playerName = event.target.playerName;
-    Meteor.call('addPlayer', templateInstance.dict.get('id'), playerName.value);
+    Meteor.call('addPlayer', Ladders.findOne()._id, playerName.value);
     playerName.value = '';
     return false;
   },
 
-  'click .removePlayer': function(event, templateInstance) {
-    Meteor.call(
-        'removePlayer', templateInstance.dict.get('id'), event.target.value);
+  'click .removePlayer': function(event) {
+    Meteor.call('removePlayer', Ladders.findOne()._id, event.target.value);
   },
 
-  'click .addSetup': function(event, templateInstance) {
-    Meteor.call('addSetup', templateInstance.dict.get('id'));
+  'click .addSetup': function(event) {
+    Meteor.call('addSetup', Ladders.findOne()._id);
   },
 
-  'click .removeSetup': function(event, templateInstance) {
-    Meteor.call(
-        'removeSetup', templateInstance.dict.get('id'), event.target.value);
+  'click .removeSetup': function(event) {
+    Meteor.call('removeSetup', Ladders.findOne()._id, event.target.value);
   },
 
   'submit .importFromSmashgg': function(event, templateInstance) {
@@ -265,8 +263,7 @@ Template.ladderPage.events({
       return;
     }
 
-    const ladderId = templateInstance.dict.get('id');
-    Meteor.call('addAllPlayers', ladderId, entrants, (err) => {
+    Meteor.call('addAllPlayers', Ladders.findOne()._id, entrants, (err) => {
       if (!err) {
         templateInstance.dict.set('smashggImport', undefined);
         templateInstance.dict.set('poolIndex', 0);
@@ -286,97 +283,71 @@ Template.ladderPage.events({
     templateInstance.dict.set('poolIndex', nextPoolIndex);
   },
 
-  'click .raiseSeed': function(event, templateInstance) {
-    Meteor.call(
-        'raiseSeed', templateInstance.dict.get('id'), event.target.value);
+  'click .raiseSeed': function(event) {
+    Meteor.call('raiseSeed', Ladders.findOne()._id, event.target.value);
   },
 
-  'click .lowerSeed': function(event, templateInstance) {
-    Meteor.call(
-        'lowerSeed', templateInstance.dict.get('id'), event.target.value);
+  'click .lowerSeed': function(event) {
+    Meteor.call('lowerSeed', Ladders.findOne()._id, event.target.value);
   },
 
-  'change .tier': function(event, templateInstance) {
+  'change .tier': function(event) {
     const value = event.target.value;
     const tier = value && parseInt(value) ? parseInt(value): 0;
-    Meteor.call(
-        'setTier', templateInstance.dict.get('id'), event.target.name, tier);
+    Meteor.call('setTier', Ladders.findOne()._id, event.target.name, tier);
   },
 
-  'click .startLadder': function(event, templateInstance) {
-    Meteor.call('startLadder', templateInstance.dict.get('id'));
+  'click .startLadder': function(event) {
+    Meteor.call('startLadder', Ladders.findOne()._id);
   },
 
-  'click .closeLadder': function(event, templateInstance) {
-    Meteor.call('setLadderClosed', templateInstance.dict.get('id'), true);
+  'click .closeLadder': function(event) {
+    Meteor.call('setLadderClosed', Ladders.findOne()._id, true);
   },
 
-  'click .openLadder': function(event, templateInstance) {
-    Meteor.call('setLadderClosed', templateInstance.dict.get('id'), false);
+  'click .openLadder': function(event) {
+    Meteor.call('setLadderClosed', Ladders.findOne()._id, false);
   },
 
-  'click .manualPromote': function(event, templateInstance) {
-    Meteor.call('manualPromote', templateInstance.dict.get('id'));
+  'click .manualPromote': function(event) {
+    Meteor.call('manualPromote', Ladders.findOne()._id);
   },
 
-  'click .queuePlayer': function(event, templateInstance) {
-    Meteor.call(
-        'queuePlayer', templateInstance.dict.get('id'), event.target.value);
+  'click .queuePlayer': function(event) {
+    Meteor.call('queuePlayer', Ladders.findOne()._id, event.target.value);
   },
 
-  'click .unqueue': function(event, templateInstance) {
-    Meteor.call(
-        'unqueue',
-        templateInstance.dict.get('id'),
-        event.target.value);
+  'click .unqueue': function(event) {
+    Meteor.call('unqueue', Ladders.findOne()._id, event.target.value);
   },
 
-  'submit .winPlayer': function(event, templateInstance) {
+  'submit .winPlayer': function(event) {
+    const ladderId = Ladders.findOne()._id;
     if (event.target.winner.value === 'player1') {
-      Meteor.call(
-          'submitWinner',
-          templateInstance.dict.get('id'),
-          event.target.pairingId.value,
-          1);
+      Meteor.call('submitWinner', ladderId, event.target.pairingId.value, 1);
     } else if (event.target.winner.value === 'player2') {
-      Meteor.call(
-          'submitWinner',
-          templateInstance.dict.get('id'),
-          event.target.pairingId.value,
-          2);
+      Meteor.call('submitWinner', ladderId, event.target.pairingId.value, 2);
     } else if (event.target.winner.value === 'player1Forfeit') {
-      Meteor.call(
-          'submitForfeit',
-          templateInstance.dict.get('id'),
-          event.target.pairingId.value,
-          1);
+      Meteor.call('submitForfeit', ladderId, event.target.pairingId.value, 1);
     } else if (event.target.winner.value === 'player2Forfeit') {
-      Meteor.call(
-          'submitForfeit',
-          templateInstance.dict.get('id'),
-          event.target.pairingId.value,
-          2);
+      Meteor.call('submitForfeit', ladderId, event.target.pairingId.value, 2);
     }
     return false;
   },
 
-  'click .freezeMatch': function(event, templateInstance) {
-    Meteor.call(
-        'freezeMatch', templateInstance.dict.get('id'), event.target.value);
+  'click .freezeMatch': function(event) {
+    Meteor.call('freezeMatch', Ladders.findOne()._id, event.target.value);
   },
 
-  'click .fixMatch': function(event, templateInstance) {
-    Meteor.call(
-        'fixMatch', templateInstance.dict.get('id'), event.target.value);
+  'click .fixMatch': function(event) {
+    Meteor.call('fixMatch', Ladders.findOne()._id, event.target.value);
   },
 
-  'click .freezePlayer': function(event, templateInstance) {
-    Meteor.call(
-        'cullPlayer', templateInstance.dict.get('id'), event.target.value);
+  'click .freezePlayer': function(event) {
+    Meteor.call('cullPlayer', Ladders.findOne()._id, event.target.value);
   },
 
-  'click .unfreezePlayer': function(event, templateInstance) {
-    Meteor.call(
-        'reinstatePlayer', templateInstance.dict.get('id'), event.target.value);
+  'click .unfreezePlayer': function(event) {
+    Meteor.call('reinstatePlayer', Ladders.findOne()._id, event.target.value);
   },
 });
