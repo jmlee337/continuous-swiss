@@ -5,9 +5,9 @@
   <br/>
   {{#each ladders}}
     <div>
-      {{name}}
-      <a href="ladder/{{slug}}/reporting">reporting</a>
-      <a href="ladder/{{slug}}/admin">admin</a>
+      <a href="ladder/{{slug}}">{{name}}</a>
+      (<a href="ladder/{{slug}}/reporting">reporting</a>,
+      <a href="ladder/{{slug}}/admin">admin</a>)
     </div>
   {{/each}}
   <br/>

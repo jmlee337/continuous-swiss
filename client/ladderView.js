@@ -4,9 +4,9 @@ import {Pairings} from '/lib/collections.js';
 import {ReactiveDict} from 'meteor/reactive-dict';
 import {Template} from 'meteor/templating';
 
-import './ladderReporting.html';
+import './ladderView.html';
 
-Template.ladderReporting.onCreated(function() {
+Template.ladderView.onCreated(function() {
   this.dict = new ReactiveDict();
   let handles = [];
 
@@ -25,7 +25,7 @@ Template.ladderReporting.onCreated(function() {
   });
 });
 
-Template.ladderReporting.helpers({
+Template.ladderView.helpers({
   'ladderName': function() {
     return Template.instance().dict.get('name');
   },
