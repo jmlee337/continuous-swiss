@@ -27,6 +27,7 @@ export function tryPromote(ladderId) {
               {sort: [['queueTime', 'asc']]})
           .fetch());
 
+  const numSeeds = Ladders.findOne(ladderId).numSeeds;
   for (let i = 0; i < players.length; i++) {
     const player = players[i];
     const match =
@@ -39,18 +40,40 @@ export function tryPromote(ladderId) {
             })
         .fetch()
         .filter((match) => {
-          return canMatch(ladderId, player, match);
+          return !player.opponents.includes(match._id) &&
+              !seedExcludesFn(numSeeds, player, match);
         }).sort((a, b) => {
-          if (player.queue === Queue.WAITING) {
-            return a.games - b.games;
-          } else {
-            const aGamesDiff = Math.abs(a.games - player.games);
-            const bGamesDiff = Math.abs(b.games - player.games);
-            if (aGamesDiff !== bGamesDiff) {
-              return aGamesDiff - bGamesDiff;
+          // 1st: nearest to the same round as the player
+          const playerGames = player.games + player.bonuses;
+          const aGamesDiff = Math.abs(a.games - playerGames);
+          const bGamesDiff = Math.abs(b.games - playerGames);
+          if (aGamesDiff !== bGamesDiff) {
+            return aGamesDiff - bGamesDiff;
+          }
+
+          // 2nd: nearest to the optimal matched seed
+          if (player.seed !== Number.MAX_SAFE_INTEGER &&
+              a.seed !== Number.MAX_SAFE_INTEGER &&
+              b.seed !== Number.MAX_SAFE_INTEGER) {
+            const wantedSeed = seedWantsFn(numSeeds, player);
+            const aSeedDiff = 
+                Array.isArray(wantedSeed) ?
+                    Math.min(
+                        Math.abs(a.seed - wantedSeed[0]),
+                        Math.abs(a.seed - wantedSeed[1])) :
+                    Math.abs(a.seed - wantedSeed);
+            const bSeedDiff = 
+                Array.isArray(wantedSeed) ?
+                    Math.min(
+                        Math.abs(b.seed - wantedSeed[0]),
+                        Math.abs(b.seed - wantedSeed[1])) :
+                    Math.abs(b.seed - wantedSeed);
+            if (aSeedDiff !== bSeedDiff) {
+              return aSeedDiff - bSeedDiff;
             }
           }
-          // TODO: maybe sort by closeness to desired seed before this.
+
+          // 3rd: first in queue
           return a.queueTime - b.queueTime;
         })[0];
     if (match) {
@@ -82,12 +105,7 @@ export function tryPromote(ladderId) {
   }
 }
 
-function canMatch(ladderId, player1, player2) {
-  return !player1.opponents.includes(player2._id) &&
-    !seedExcludes(ladderId, player1, player2);
-}
-
-function seedExcludes(ladderId, player1, player2) {
+function seedExcludesFn(numSeeds, player1, player2) {
   const seed1 = player1.seed;
   const seed2 = player2.seed;
   if (seed1 === Number.MAX_SAFE_INTEGER || seed2 === Number.MAX_SAFE_INTEGER) {
@@ -95,19 +113,48 @@ function seedExcludes(ladderId, player1, player2) {
   }
 
   const divisor = Math.pow(2, Math.min(player1.games, player2.games) + 1);
-  const segLength = Ladders.findOne(ladderId).numSeeds / divisor;
+  const segLength = numSeeds / divisor;
   if (segLength < 2) {
     return false;
   }
+
   return getSegIndexFn(seed1, segLength) === getSegIndexFn(seed2, segLength);
+}
+
+function seedWantsFn(numSeeds, player) {
+  const seed = player.seed;
+  if (seed === Number.MAX_SAFE_INTEGER) {
+    return -1;
+  }
+
+  const numSegs = Math.pow(2, player.games);
+  const segLength = numSeeds / numSegs;
+  if (segLength < 2) {
+    return -1;
+  }
+
+  const segIndex = getSegIndexFn(seed, segLength);
+  if (Array.isArray(segIndex)) {
+    const first = Math.ceil(segLength * segIndex[0]);
+    const last = Math.floor(segLength * (segIndex[1] + 1)) - 1;
+    return [first, last];
+  } else {
+    // Simplification of:
+    // const segBegin = Math.ceil(segLength * segIndex);
+    // const offset = seed - segBegin;
+    // const oppositeOffset = Math.floor(segLength) - offset - 1;
+    // return segBegin + oppositeOffset;
+    const segBegin = Math.ceil(segLength * segIndex);
+    return 2 * segBegin + Math.floor(segLength) - seed - 1;
+  }
 }
 
 function getSegIndexFn(seed, segLength) {
   const index = Math.floor(seed / segLength);
   const remainder = seed % segLength;
   if (segLength - remainder < 1) {
-    // seed sits on a segment partition, so it's not a part of any segment
-    return undefined;
+    // seed sits on the partition between two segments
+    return [index, index + 1];
   }
   return index;
 }

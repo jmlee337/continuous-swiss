@@ -23,7 +23,6 @@ Meteor.methods({
 });
 
 function updatePlayer(player, i) {
-  console.log(player.name);
   if (player.seed === Number.MAX_SAFE_INTEGER) {
     Players.update(player._id, {$set: {seed: i, queueTime: Date.now()}});
   } else {
