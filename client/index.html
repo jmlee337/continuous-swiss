@@ -1,10 +1,10 @@
-<template name="ladderIndex">
+<template name="index">
   <form class="createLadder">
     <input type="text" name="ladderName" placeholder="New ladder name">
   </form>
   <br/>
   {{#each ladders}}
-    <div><a href="ladder/{{slug}}">{{name}}</a></div>
+    <div><a href="ladder/{{slug}}/admin">{{name}}</a></div>
   {{/each}}
   <br/>
   <button class="clearDb" type="button">Clear DB</button>

@@ -15,9 +15,9 @@ import {Template} from 'meteor/templating';
 import format from 'format-duration';
 import {standingsSortFn} from '/lib/standings.js';
 
-import './ladderPage.html';
+import './ladderAdmin.html';
 
-Template.ladderPage.onCreated(function() {
+Template.ladderAdmin.onCreated(function() {
   this.dict = new ReactiveDict();
   this.dict.set('poolIndex', 0);
   let handles = [];
@@ -41,7 +41,7 @@ Template.ladderPage.onCreated(function() {
   });
 });
 
-Template.ladderPage.helpers({
+Template.ladderAdmin.helpers({
   'ladderName': function() {
     return Template.instance().dict.get('name');
   },
@@ -212,7 +212,7 @@ Template.ladderPage.helpers({
   },
 });
 
-Template.ladderPage.events({
+Template.ladderAdmin.events({
   'submit .addPlayer': function(event) {
     const playerName = event.target.playerName;
     Meteor.call('addPlayer', Ladders.findOne()._id, playerName.value);

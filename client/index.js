@@ -2,19 +2,19 @@ import {FlowRouter} from 'meteor/kadira:flow-router';
 import {Ladders} from '/lib/collections.js';
 import {Template} from 'meteor/templating';
 
-import './ladderIndex.html';
+import './index.html';
 
-Template.ladderIndex.onCreated(function() {
+Template.index.onCreated(function() {
   this.subscribe('ladders');
 });
 
-Template.ladderIndex.helpers({
+Template.index.helpers({
   'ladders': function() {
     return Ladders.find({});
   },
 });
 
-Template.ladderIndex.events({
+Template.index.events({
   'submit .createLadder': function(event) {
     Meteor.call('createLadder', event.target.ladderName.value, (err, slug) => {
       if (err) {
