@@ -56,13 +56,13 @@ export function tryPromote(ladderId) {
               a.seed !== Number.MAX_SAFE_INTEGER &&
               b.seed !== Number.MAX_SAFE_INTEGER) {
             const wantedSeed = seedWantsFn(numSeeds, player);
-            const aSeedDiff = 
+            const aSeedDiff =
                 Array.isArray(wantedSeed) ?
                     Math.min(
                         Math.abs(a.seed - wantedSeed[0]),
                         Math.abs(a.seed - wantedSeed[1])) :
                     Math.abs(a.seed - wantedSeed);
-            const bSeedDiff = 
+            const bSeedDiff =
                 Array.isArray(wantedSeed) ?
                     Math.min(
                         Math.abs(b.seed - wantedSeed[0]),
