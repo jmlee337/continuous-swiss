@@ -25,7 +25,7 @@ Template.ladderAdmin.onCreated(function() {
   this.autorun(() => {
     handles.forEach((handle) => {
       handle.stop();
-    })
+    });
     handles = [];
 
     handles.push(this.subscribe('ladder', FlowRouter.getParam('slug'), () => {
