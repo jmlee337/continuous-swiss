@@ -32,7 +32,7 @@
     <div class="container">
       <div class="column">
         <h2>Playing</h2>
-        <table class="withButtons">
+        <table>
           {{#each playing}}
             <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
               <td rowspan="2">{{#if setupNumber}}{{setupNumber}}{{else}}&#x2744;{{/if}}</td>
@@ -77,7 +77,7 @@
         </table>
 
         <h3>Priority</h3>
-        <table class="withButtons">
+        <table>
           {{#each waiting}}
             <tr>
               <td>{{name}}*</td>
@@ -90,7 +90,7 @@
         </table>
 
         <h3>Matchmaking</h3>
-        <table class="withButtons">
+        <table>
           {{#each matchmaking}}
             <tr>
               <td>{{name}}</td>
@@ -104,7 +104,7 @@
       </div>
       <div class="column">
         <h2>Finished</h2>
-        <table class="withButtons">
+        <table>
           {{#each finished}}
             <tr class="{{#if shouldHighlight queueTime}}highlight{{/if}}">
               <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
@@ -122,7 +122,7 @@
           {{/each}}
         </table>
         <h3>Unqueued</h3>
-        <table class="withButtons">
+        <table>
           {{#each unqueued}}
             <tr>
               <td>{{name}}{{#if hasBonuses bonuses games}}*{{/if}}</td>
@@ -173,7 +173,7 @@
       </div>
       <div class="column">
         <h2>Matches</h2>
-        <table class="withHeader withButtons">
+        <table class="withHeader">
           <thead><tr><td>Winner</td><td>Loser</td><td>Time</td><td>Fix?</td></tr></thead>
           <tbody>
             {{#each matches}}
@@ -204,7 +204,7 @@
     <div class="container">
       <div class="column">
         <h3>Players</h3>
-        <table class="withButtons">
+        <table>
           {{#each players}}
             <tr>
               <td rowspan="2">{{getSeed seed}}</td>
@@ -244,7 +244,7 @@
               <h4>{{event}}, {{phase}}, {{group}}</h4>
               <button class="addAll" type="button">Add all</button>
               <button class="nextPoolIndex" type="button">Next</button>
-              <table class="withButtons">
+              <table>
                 {{#each entrant in entrants}}
                   <tr><td>{{entrant}}</td></tr>
                 {{/each}}
