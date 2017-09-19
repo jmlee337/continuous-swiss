@@ -33,4 +33,21 @@ Template.ladderReporting.helpers({
   'pairings': function() {
     return Pairings.find({}, {sort: [['queueTime', 'asc']]});
   },
+
+  'pairing': function() {
+    return Pairings.findOne(Template.instance().dict.get('pairingId'));
+  },
+});
+
+Template.ladderReporting.events({
+  'click .pair': function(event, templateInstance) {
+    templateInstance.dict.set('pairingId', event.currentTarget.id);
+  },
+
+  'submit #form': function(event, templateInstance) {
+    console.log(event.target.winner.value);
+    console.log(event.target.player1.value);
+    console.log(event.target.player2.value);
+    return false;
+  },
 });

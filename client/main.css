@@ -2,6 +2,22 @@ div {
   margin-bottom: 1em;
 }
 
+.full {
+  align-content: stretch;
+  align-items: stretch;
+  display: flex;
+  height: 80vh;
+  width: 100%;
+}
+
+.full > div {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+}
+
 .container {
   display: flex;
   flex-direction: row;
@@ -11,6 +27,30 @@ div {
 .column {
   margin-right: 32px;
   min-width: 256px;
+}
+
+.reportingBox {
+  align-items: center;
+  border: 1px solid gray;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  font-size: 24px;
+  margin-right: 8px;
+  min-width: 6em;
+}
+
+.reportingBox:hover {
+  background-color: #cccccc;
+}
+
+.reportingBox:active {
+  background-color: #aaaaaa;
+}
+
+.reportingBox > span {
+  margin-top: .25em;
+  margin-bottom: .25em;
 }
 
 table {

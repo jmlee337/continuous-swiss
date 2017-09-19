@@ -1,6 +1,51 @@
 <template name="ladderReporting">
   <h1>{{ladderName}}</h1>
-  {{#each pairings}}
-    <div>{{player1Name}}, {{player2Name}}</div>
-  {{/each}}
+
+  {{#if pairing}}
+    <div class="full">
+      <div>
+        <label class="reportingBox">
+          <input type="radio" name="winner" value="1" form="form">
+          {{pairing.player1Name}}
+        </label>
+        <label class="reportingBox">
+          <input type="radio" name="player1" value="yes" form="form">
+          Play Again
+        </label>
+        <label class="reportingBox">
+          <input type="radio" name="player1" value="no" form="form">
+          Quit
+        </label>
+      </div>
+      <div>
+        <label class="reportingBox">
+          <input type="radio" name="winner" value="2" form="form">
+          {{pairing.player2Name}}
+        </label>
+        <label class="reportingBox">
+          <input type="radio" name="player2" value="yes" form="form">
+          Play Again
+        </label>
+        <label class="reportingBox">
+          <input type="radio" name="player2" value="no" form="form">
+          Quit
+        </label>
+      </div>
+      <div>
+        <form id="form">
+          <button type="submit" class="reportingBox">Submit</button>
+        </form>
+        <button class="cancel reportingBox">Cancel</button>
+      </div>
+    </div>
+  {{else}}
+    <div class="container">
+      {{#each pairings}}
+        <div class="pair reportingBox" id="{{_id}}">
+          <span>{{player1Name}}</span>
+          <span>{{player2Name}}</span>
+        </div>
+      {{/each}}
+    </div>
+  {{/if}}
 </template>
