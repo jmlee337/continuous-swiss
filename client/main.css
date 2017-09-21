@@ -18,6 +18,10 @@ div {
   justify-content: center;
 }
 
+.full > div > div {
+  display: flex;
+}
+
 .container {
   display: flex;
   flex-direction: row;
@@ -29,6 +33,14 @@ div {
   min-width: 256px;
 }
 
+.reportingRadio {
+  display: none;
+}
+
+.reportingRadio:checked+label {
+  background-color: #30ff30;
+}
+
 .reportingBox {
   align-items: center;
   border: 1px solid gray;
@@ -36,8 +48,15 @@ div {
   display: flex;
   flex-direction: column;
   font-size: 24px;
-  margin-right: 8px;
+  margin: 0 0.5em 0.5em 0;
   min-width: 6em;
+  padding: 0.5em 0;
+}
+
+
+button.reportingBox {
+  background-color: #ffffff;
+  font-family: inherit;
 }
 
 .reportingBox:hover {
@@ -51,6 +70,11 @@ div {
 .reportingBox > span {
   margin-top: .25em;
   margin-bottom: .25em;
+}
+
+.reportError {
+  color: red;
+  font-style: italic;
 }
 
 table {
