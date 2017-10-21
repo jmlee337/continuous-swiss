@@ -4,6 +4,7 @@ import {Players} from '/lib/collections.js';
 import {Queue} from '/lib/queue.js';
 
 import {check} from 'meteor/check';
+import {modeFn} from '/lib/mode.js';
 
 Meteor.methods({
   queuePlayer: function(ladderId, playerId) {
@@ -37,15 +38,9 @@ Meteor.methods({
         }
       }
     } else {
-      const minGames =
-          Players.find({ladderId: ladderId, queue: {$ne: Queue.NONE}})
-              .fetch()
-              .reduce((min, rPlayer) => {
-                const games = rPlayer.games + rPlayer.bonuses;
-                return Math.min(
-                    min, rPlayer.queue === Queue.FINISHED ? games - 1 : games);
-              }, Number.MAX_SAFE_INTEGER);
-      if (player.games > minGames + 1) {
+      const findArgs = {ladderId: ladderId, queue: {$ne: Queue.NONE}};
+      const modeGames =modeFn(Players.find(findArgs).fetch());
+      if (player.games > modeGames + 1) {
         throw new Meteor.Error('PRECONDITION_FAILED', 'player is ahead');
       }
     }

@@ -13,6 +13,7 @@ import {TimeSync} from 'meteor/mizzao:timesync';
 import {Template} from 'meteor/templating';
 
 import format from 'format-duration';
+import {modeFn} from '/lib/mode.js';
 import {standingsSortFn} from '/lib/standings.js';
 
 import './ladderAdmin.html';
@@ -199,15 +200,8 @@ Template.ladderAdmin.helpers({
     if (Ladders.findOne().closed) {
       return false;
     }
-    const minGames = Players.find({queue: {$ne: Queue.NONE}})
-        .fetch()
-        .reduce((min, player) => {
-          const games = player.games + player.bonuses;
-          return Math.min(
-              min, player.queue === Queue.FINISHED ? games - 1 : games);
-        }, Number.MAX_SAFE_INTEGER);
-
-    return Players.findOne(playerId).games <= minGames + 1;
+    const modeGames = modeFn(Players.find({queue: {$ne: Queue.NONE}}).fetch());
+    return Players.findOne(playerId).games <= modeGames + 1;
   },
 });
 
